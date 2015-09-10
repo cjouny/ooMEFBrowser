@@ -105,17 +105,7 @@ classdef MEF_file < handle
              end
             
             total_dur_sample=floor(uduration*MEFFile.header.sampling_frequency/1e6);  % total number of sample requested
-            
             Ts=1/MEFFile.header.sampling_frequency*1e6; %sampling period
-            
-%             Xpts=(utime0-MEFFile.header.recording_start_time)*MEFFile.header.sampling_frequency/1e6;
-%             if Xpts>=0,
-%                 offset_sample=max(1,floor(Xpts)+1);  % start in this file. Start reading at offset_sample
-%                 skippoints=0;                        % no skip
-%             else
-%                 offset_sample=1;                      % start was before this file start - read from beginning
-%                 skippoints=floor(-Xpts)-1;            % NaN points to add at beginning as requested time is before this file onset 
-%             end
 
             % Exact match +/- Ts
             if abs(utime0-MEFFile.header.recording_start_time)<Ts, % within +/- Ts assume match
@@ -127,9 +117,6 @@ classdef MEF_file < handle
             if (utime0>=(MEFFile.header.recording_start_time+Ts)), % request is at least one offset point after the start of the file
                 %offset_sample=length(MEFFile.header.recording_start_time:Ts:utime0);
                 offset_sample=floor((utime0-MEFFile.header.recording_start_time)/Ts)+1;
-                %if offset_sample~=offset_sample_bis,
-                %    disp(offset_sample_bis);
-                %end
                 skippoints=0;
             end
            

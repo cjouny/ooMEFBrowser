@@ -220,7 +220,7 @@ function ooMEFBrowser_OpeningFcn(hObject, ~, handles, varargin)
     set(P.EventListBox, 'String', P.sztimes);
 
     
-    P.eventfigure=figure('Units', 'Norm', 'Position', [0.75 0.1 0.2 0.8]);
+    P.eventfigure=figure('Units', 'Norm', 'Position', [0.75 0.1 0.2 0.8], 'visible','off');
     P.hEventList = uimulticollist( P.eventfigure, 'units', 'normalized', 'position', [0.05 0.05 0.9 0.9] );
         
     P.drive=drive;

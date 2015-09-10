@@ -93,7 +93,6 @@ classdef MEF_header < handle
             % Open MEF file
             fp = fopen(filename, 'r');
             if fp == -1, 
-                %disp('MEF_header:ReadFromFile', ['Could not open the file ' filename]);
                 HDR.status=0;
                 return;
             end

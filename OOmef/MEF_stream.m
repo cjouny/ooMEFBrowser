@@ -79,9 +79,6 @@ classdef MEF_stream < handle
             
                 while ~Tstop && nfset<Tnf,                                                              % Loop for remaining data   
                     
-                    % last sample +1 read gives the new utime1
-                    %utime1=MEFStream.mef_files(nfset-1).header.recording_start_time+ (1e6*(MEFStream.mef_files(nfset-1).sample_end)/MEFStream.fs);
-                    
                     Ts=1/MEFStream.fs;
                     utime1=MEFStream.mef_files(nfset-1).header.recording_end_time + Ts*1e6 ; % next point is 1 period after the end of last file
                     
@@ -113,7 +110,6 @@ classdef MEF_stream < handle
             end
             
             % Generic time scale
-            %MEFStream.tEEG=x0+1e6*[0:length(MEFStream.EEG)-1]/MEFStream.fs;
             MEFStream.tEEG0=x0;
 
         end
