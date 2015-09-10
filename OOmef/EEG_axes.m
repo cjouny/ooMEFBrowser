@@ -60,7 +60,7 @@ classdef EEG_axes < handle
             %EEGAxe.eegplots(nplot).plot_handle=plot(EEGAxe.h, 0,0);
             EEGAxe.eegplots(nplot).scale=EEGAxe.scale;
             EEGAxe.nplot=nplot;
-            set(EEGAxe.h, 'YLim', [0.5 EEGAxe.nplot+0.5]);
+            set(EEGAxe.h, 'YLim', [-0.01*EEGAxe.nplot 1.05*EEGAxe.nplot]);
             
             EEGPlotUImenu = uicontextmenu('Parent', EEGAxe.parentfigure);
             uimenu(EEGPlotUImenu, 'Label',['Hide ' label], 'UserData', nplot, 'Callback', @AxeHidePlot);

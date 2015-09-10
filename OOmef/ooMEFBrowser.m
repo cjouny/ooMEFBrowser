@@ -16,6 +16,7 @@
 %   6                : toogle 60Hz notch filter
 %   z                : toggle zscore
 %   g                : open window to specify time
+%   e                : toggle event display
 %   q                : quit
 %
 %   ** right-click channels or their label to hide channels
@@ -39,6 +40,7 @@
 % 09/03/2015: Events plotted as patch for SZ in event list
 % 09/10/2015: Numerous handle fixes to allow multiple figures
 % 09/10/2015: Enable Menu, toolbar and secondary figure for events
+% 09/10/2015: Change axe limites, create events area, and display toggle for events
 %
 % TODO: fix filters
 % TODO: clean up folder application
@@ -220,7 +222,7 @@ function ooMEFBrowser_OpeningFcn(hObject, ~, handles, varargin)
     set(P.EventListBox, 'String', P.sztimes);
 
     
-    P.eventfigure=figure('Units', 'Norm', 'Position', [0.75 0.1 0.2 0.8], 'visible','off');
+    P.eventfigure=figure('Units', 'Norm', 'Position', [0.75 0.1 0.2 0.8], 'visible','on');
     P.hEventList = uimulticollist( P.eventfigure, 'units', 'normalized', 'position', [0.05 0.05 0.9 0.9] );
         
     P.drive=drive;
@@ -229,6 +231,7 @@ function ooMEFBrowser_OpeningFcn(hObject, ~, handles, varargin)
     
     P.ftoggle=2;
     P.hfotoggle=0;
+    P.evttoggle=1;
     P.filter60=0;
     P.aliasing=1;
     P.xtick=1;
@@ -433,6 +436,14 @@ switch eventdata.Key,
         end
     case 'h',
         P.hfotoggle=1-P.hfotoggle;
+    case 'e',
+        P.evttoggle=1-P.evttoggle;
+        hevts=findobj(P.eega.h, 'Tag', 'SZ');
+        if P.evttoggle, set(hevts,'Visible', 'on');
+        else set(hevts,'Visible', 'off');
+        end
+        guidata(hObject, P);
+        return;
         
     case '6',
         P.filter60=1-P.filter60;
