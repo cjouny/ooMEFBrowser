@@ -4,6 +4,8 @@ function maf = NMAF2MMAF(maf, filepath, filename)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   
 % CC Jouny - Johns Hopkins University - 2014 (c) 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% 09/20/2015: Added Event conversion
 
 p=mfilename('fullpath');
 k=strfind(p,filesep);
@@ -19,6 +21,9 @@ maf.nb_episodes=mafNETfile.timeline.nperiod;
 maf.stream_label_list={};
 maf.mef_streams=MEF_stream.empty(maf.MAX_STREAM,0);
 
+maf.event_list=cell(1,2);
+maf.nbevt=0;
+
 IDcounter=0;
 for nepisode=1:maf.nb_episodes,                                                 % Loop over episode
     current_episode=mafNETfile.subject.episodes.Item(nepisode-1);               % zero indexing
@@ -29,6 +34,7 @@ for nepisode=1:maf.nb_episodes,                                                 
             fprintf('Timestamps inconsistency at start of episode %d @ %s\n', nepisode, usec2date(current_episode.RST));
         end
     end
+    
     
     for nsource=1:current_episode.nbsources,                                            % Loop of sources
         current_label=char(current_episode.sources.Item(nsource-1).label);
@@ -65,6 +71,18 @@ for nepisode=1:maf.nb_episodes,                                                 
         maf.mef_streams(sourceID).start_times(nepisode)=current_episode.RST;         % Copy start and end times
         maf.mef_streams(sourceID).end_times(nepisode)=current_episode.RET;
     end
+    
+    % Loop over events by episode
+    for nevt=1:current_episode.events.Count,
+        for nts=1:current_episode.events.Item(nevt-1).timestamps.Count,
+            maf.nbevt=maf.nbevt+1;
+            timeonset=current_episode.events.Item(nevt-1).timestamps.Item(nts-1).onset;
+            typeevt=char(current_episode.events.Item(nevt-1).type);
+            maf.event_list(maf.nbevt,1)={timeonset};
+            maf.event_list(maf.nbevt,2)={typeevt};
+        end
+    end
+    
 end
 maf.nb_stream=IDcounter;
 

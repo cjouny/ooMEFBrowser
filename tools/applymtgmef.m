@@ -6,7 +6,7 @@
 % 08/2015: Added support for grid list/grid size infos
 %
 % CC Jouny - Johns Hopkins University - 2012-2015 (c) 
-% 
+ 
 function [Feeg, Flabels, Blabels, Lindex]=applymtgmef(eeg, labels, gl, gs)
 
 if nargin==2,

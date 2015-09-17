@@ -114,6 +114,7 @@ function ooMEFBrowser_OpeningFcn(hObject, ~, handles, varargin)
             P.maf=P.maf.ReadALLMAF;
             P.dtoggle=0;
             P.typehdr=0;
+            %P.eventlisttime=[P.maf.event_list{:,1}];
         else
             % if not MAF check REC
             %%%%%%%%%%%% REC Header and initialization
@@ -218,12 +219,15 @@ function ooMEFBrowser_OpeningFcn(hObject, ~, handles, varargin)
     [sztimes_cj, P.exclusion, P.GL, P.GS]=SZDB_CJ(PY_ID);
     [sztimes_de]=SZDB_DE(PY_ID);
 
-    P.sztimes=[sztimes_cj; sztimes_de];
+    %eventlisttime=[date2usec(sztimes_cj); date2usec(sztimes_de); [P.maf.event_list{:,1}]'];
+    eventlisttime=[date2usec(sztimes_cj)];
+    [P.eventlisttime, indextime]=sort(eventlisttime);
+    P.sztimes=usec2date(P.eventlisttime);
+    %P.sztimes=[date2usec(sztimes_cj); date2usec(sztimes_de); P.eventlisttime];
     set(P.EventListBox, 'String', P.sztimes);
-
     
-    P.eventfigure=figure('Units', 'Norm', 'Position', [0.75 0.1 0.2 0.8], 'visible','on');
-    P.hEventList = uimulticollist( P.eventfigure, 'units', 'normalized', 'position', [0.05 0.05 0.9 0.9] );
+    %P.eventfigure=figure('Units', 'Norm', 'Position', [0.75 0.1 0.2 0.8], 'visible','on');
+    %P.hEventList = uimulticollist( P.eventfigure, 'units', 'normalized', 'position', [0.05 0.05 0.9 0.9] );
         
     P.drive=drive;
     P.PY_ID=PY_ID;
@@ -524,6 +528,7 @@ end
 
 % --- Executes on button press in pushbutton11. (FF - Space bar)
 function pushbutton11_Callback(~, ~, handles)
+tic;
     P=handles;
     tread=P.windowstart+P.windowsize*1e6+1e6/P.Fs;
     shift=P.windowsize;
@@ -534,6 +539,7 @@ function pushbutton11_Callback(~, ~, handles)
         %guidata(hObject, P);
         OOupdatemefplot(P);
     end
+    disp(toc);
 end
 
 % --- Executes on button press in pushbutton12.
@@ -548,6 +554,7 @@ global livestream;
     P.play=1;
     guidata(hObject, P);
     while P.play,
+        tic;
         P=guidata(hObject);
         if livestream,
             % read live data
@@ -556,7 +563,10 @@ global livestream;
         else
             pushbutton11_Callback(hObject, [], P);
         end
-        drawnow; pause(0.01);
+        drawnow;
+        %refreshdata;
+        %pause(0.05);
+        disp(toc);
     end
 end
 

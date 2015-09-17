@@ -1,8 +1,8 @@
-%% Group Channel by Grid based on Name Root
-%%
-%%
-%% CC Jouny - Johns Hopkins University - 2012-2013 (c) 
-%%
+% channel_group: Group Channel by Grid based on Name Root
+%
+%
+% CC Jouny - Johns Hopkins University - 2012-2013 (c) 
+
 
 function [S, Group, I, GroupLabel]=channel_group(labels)
 

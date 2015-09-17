@@ -1,10 +1,8 @@
-%% USEC2DATE 
-%%
-%% Convert time in microseconds from 01/01/1970 to readable date
-%%
-%% Use formatstr='u' to get the milli and microseconds.
-%%
-%% CC Jouny - Johns Hopkins University - 2012-2013 (c)  
+% USEC2DATE: Convert time in microseconds from 01/01/1970 (uUTC) to readable date
+%
+% Use formatstr='u' to get the milli and microseconds.
+%
+% CC Jouny - Johns Hopkins University - 2012-2013 (c)  
 
 
 function dateconvert=usec2date(timenum, formatstr)
@@ -15,7 +13,7 @@ end
 
 if length(timenum)>1,
     for ni=length(timenum):-1:1,
-        dateconvert(ni,:)=usec2date(timenum(ni), formatstr); 
+        dateconvert{ni}=usec2date(timenum(ni), formatstr); 
     end
     return;
 end

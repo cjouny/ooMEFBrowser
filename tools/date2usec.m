@@ -1,9 +1,7 @@
-%% DATE2USEC 
-%%
-%% Convert date in time in microseconds from 01/01/1970
-%%
-%% CC Jouny - Johns Hopkins University - 2012-2013 (c) 
-%%  
+% DATE2USEC : Convert date from string to time in microseconds from 01/01/1970 (uUTC)
+%
+% CC Jouny - Johns Hopkins University - 2012-2013 (c) 
+  
 
 function utime=date2usec(date)
 

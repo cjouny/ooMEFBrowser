@@ -21,6 +21,8 @@ classdef MAF_file < handle
         nb_stream               % Number of streams over entire dataset
         mef_valid               % Vector of Boolean - True if file exist
         mef_included            % Vector of Boolean - True for file to read
+        nbevt                   % Number of events recorded
+        event_list              % Structure of events / timestamps
     end
     
     properties (SetAccess = private)
@@ -53,7 +55,7 @@ classdef MAF_file < handle
                     useT=1;
                 end
             end
-            
+            %useT=0;
             if useT,
                 tmp=load(fullfile(MAFFile.filepath, [MAFFile.filename(1:end-1) 't']));  % Load MAT file if exist
                 cpath=MAFFile.filepath;

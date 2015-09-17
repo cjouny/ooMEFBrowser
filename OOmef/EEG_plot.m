@@ -47,6 +47,7 @@ end
                         'YData', EEGPlot.position+EEGPlot.scale*EEGPlot.scalefactor*EEGPlot.ydata,...
                         'Color', EEGPlot.linecolor,...
                         'LineWidth', EEGPlot.linewidth);
+            %refreshdata(EEGPlot.plot_handle);
             if EEGPlot.analysis,
                 dd=log10(sum(EEGPlot.ydata.^2))/100;
                 %dd=(linelength(EEGPlot.ydata, length(EEGPlot.ydata), length(EEGPlot.ydata)));
