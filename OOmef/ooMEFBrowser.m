@@ -220,8 +220,8 @@ function ooMEFBrowser_OpeningFcn(hObject, ~, handles, varargin)
     set(P.EventListBox, 'String', P.sztimes);
 
     
-    P.eventfigure=figure('Units', 'Norm', 'Position', [0.75 0.1 0.2 0.8], 'visible','off');
-    P.hEventList = uimulticollist( P.eventfigure, 'units', 'normalized', 'position', [0.05 0.05 0.9 0.9] );
+    %P.eventfigure=figure('Units', 'Norm', 'Position', [0.75 0.1 0.2 0.8], 'visible','off');
+    %P.hEventList = uimulticollist( P.eventfigure, 'units', 'normalized', 'position', [0.05 0.05 0.9 0.9] );
         
     P.drive=drive;
     P.PY_ID=PY_ID;
@@ -378,7 +378,7 @@ P=handles;
 switch eventdata.Key,
     % quit
     case 'q', 
-        close(P.eventfigure);
+        %close(P.eventfigure);
         close(P.mainoomeffigure);
     % move forward backward
     case 'leftarrow',
