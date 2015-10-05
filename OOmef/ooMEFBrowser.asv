@@ -112,7 +112,7 @@ function ooMEFBrowser_OpeningFcn(hObject, ~, handles, varargin)
         end
         if ~isempty(P.maf.filename),
             P.maf=P.maf.ReadALLMAF;
-            P.dtoggle=1;
+            P.dtoggle=0;
             P.typehdr=0;
             %P.eventlisttime=[P.maf.event_list{:,1}];
         else
@@ -412,7 +412,7 @@ switch eventdata.Key,
         end
     % toggle function
     case 'd',
-        P.dtoggle=1-P.dtoggle;
+        %P.dtoggle=1-P.dtoggle;
     case 'f',
         P.ftoggle=P.ftoggle+1;
         if P.ftoggle>size(P.filters,1),

@@ -15,18 +15,18 @@ codechoice=[shade shade shade;shade shade light;light shade shade;shade light sh
 cbitchoice=[codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; ];
 
 
-% Downsampling
-if P.dtoggle,
-    P.FsD=floor(P.Fs/10); % downsample to 1/10 of original Fs
-    reeg=[P.xeeg(:)-P.xeeg(1) P.eeg'];  % downsample x and y
-    reeg=downsample(reeg, 10);
-    Dxeeg=reeg(:,1)';
-    Deeg=double(reeg(:,2:end)');
-else
+% Downsampling (moved to EEGPlot)
+%if P.dtoggle,
+%    P.FsD=floor(P.Fs/10); % downsample to 1/10 of original Fs
+%    reeg=[P.xeeg(:)-P.xeeg(1) P.eeg'];  % downsample x and y
+%    reeg=downsample(reeg, 10);
+%    Dxeeg=reeg(:,1)';
+%    Deeg=double(reeg(:,2:end)');
+%else
     P.FsD=P.Fs;
     Dxeeg=P.xeeg(:)-P.xeeg(1);
     Deeg=double(P.eeg);
-end
+%end
 
 % mode mono vs bipolar
 if strcmp(P.mode,'bipolar'),
@@ -157,7 +157,7 @@ try %#ok<TRYNC> % because stand alone plot do not have those elements. Could be 
     set(P.timemarker, 'XData', [P.windowstart*[1 1] (P.windowstart+P.windowsize*1e6)*[1 1]]);
 end
 
-P.eega.Redraw(P.xtick);
+P.eega.Redraw(P.xtick, P.dtoggle);
 
 guidata(P.mainoomeffigure, P);
 

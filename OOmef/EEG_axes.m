@@ -14,6 +14,7 @@ classdef EEG_axes < handle
         backgroundcolor=[0.98 0.98 0.92];   % Background
         eegplots=EEG_plot.empty(256,0);     % Array of plot handles
         visibleplots;                       % List of plots to show/hide
+        decimate;                           % Flag for decimation
         nplot=0;                            % Number of plots
         xspan                               % Span on X axis
         xtick=1e6;                          % Space between X lines - default 1s = 1e6 us
@@ -78,10 +79,11 @@ classdef EEG_axes < handle
             EEGAxe.Redraw(EEGAxe.xtickenable);
         end
         
-        function EEGAxe=Redraw(EEGAxe, enablextick)
+        function EEGAxe=Redraw(EEGAxe, enablextick, dtoggle)
             EEGAxe.xtickenable=enablextick;
+            EEGAxe.decimate=dtoggle;
             for ns=EEGAxe.nplot:-1:1,
-                EEGAxe.eegplots(ns).Draw();
+                EEGAxe.eegplots(ns).Draw(EEGAxe.decimate);
                 xmini(ns)=min(EEGAxe.eegplots(ns).xdata);
                 xmaxi(ns)=max(EEGAxe.eegplots(ns).xdata);
             end
