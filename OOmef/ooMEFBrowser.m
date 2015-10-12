@@ -41,6 +41,9 @@
 % 09/10/2015: Numerous handle fixes to allow multiple figures
 % 09/10/2015: Enable Menu, toolbar and secondary figure for events
 % 09/10/2015: Change axe limites, create events area, and display toggle for events
+% 10/xx/2015: Moved decimate to EEGPlot
+% 10/12/2015: various fixes usec2date, remove 2nd figure
+% 10/12/2015: Added reading CSV for events from NK
 %
 % TODO: fix filters
 % TODO: clean up folder application
@@ -216,11 +219,13 @@ function ooMEFBrowser_OpeningFcn(hObject, ~, handles, varargin)
     P.exclusion={};
     
     %Reading Events
+    [event_name, event_time] = readcsvevent(fullfile(data_path, PY_ID), PY_ID ); % From NK
     [sztimes_cj, P.exclusion, P.GL, P.GS]=SZDB_CJ(PY_ID);
     [sztimes_de]=SZDB_DE(PY_ID);
 
     %eventlisttime=[date2usec(sztimes_cj); date2usec(sztimes_de); [P.maf.event_list{:,1}]'];
-    eventlisttime=[date2usec(sztimes_cj)];
+    eventlisttime=[date2usec(sztimes_cj); event_time];
+    %eventlisttime=[date2usec(sztimes_cj)];
     [P.eventlisttime, indextime]=sort(eventlisttime);
     P.sztimes=usec2date(P.eventlisttime);
     %P.sztimes=[date2usec(sztimes_cj); date2usec(sztimes_de); P.eventlisttime];
@@ -528,7 +533,7 @@ end
 
 % --- Executes on button press in pushbutton11. (FF - Space bar)
 function pushbutton11_Callback(~, ~, handles)
-tic;
+%tic;
     P=handles;
     tread=P.windowstart+P.windowsize*1e6+1e6/P.Fs;
     shift=P.windowsize;
@@ -539,7 +544,7 @@ tic;
         %guidata(hObject, P);
         OOupdatemefplot(P);
     end
-    disp(toc);
+%    disp(toc);
 end
 
 % --- Executes on button press in pushbutton12.

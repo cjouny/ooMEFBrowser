@@ -1,0 +1,15 @@
+function event_list = readcsvevent(data_path, PYID )
+%READCSVEVENT Summary of this function goes here
+%   Detailed explanation goes here
+
+filename=fullpath(data_path, [PYID '.csv']);
+if exist(fielname, 'file'),
+    M=readtable(filename, 'delimiter', '\t');
+    
+    
+    
+end
+
+
+end
+
