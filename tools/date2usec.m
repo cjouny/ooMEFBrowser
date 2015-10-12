@@ -7,6 +7,11 @@ function utime=date2usec(date)
 
 D0=719529; %datenum('01/01/1970 00:00:00')
 
+if isempty(date),
+    utime=[];
+    return;
+end
+
 try
     utime=round((datenum(date)-D0)*86400)*1e6;
 catch

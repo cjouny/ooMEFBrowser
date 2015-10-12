@@ -76,7 +76,7 @@ classdef EEG_axes < handle
             for ns=1:EEGAxe.nplot,
                 EEGAxe.eegplots(ns).scale=EEGAxe.scale;
             end
-            EEGAxe.Redraw(EEGAxe.xtickenable);
+            EEGAxe.Redraw(EEGAxe.xtickenable, EEGAxe.decimate);
         end
         
         function EEGAxe=Redraw(EEGAxe, enablextick, dtoggle)
