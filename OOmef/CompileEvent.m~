@@ -1,0 +1,38 @@
+function [ events_name, events_time ] = CompileEvent( data_path, PY_ID )
+
+% COMPILEEVENT : Gather information about the events for the patient 
+
+[nk_event_name, nk_event_time] = readcsvevent(fullfile(data_path, PY_ID), PY_ID ); % From NK
+    
+    % Reading grid and seizure information if available
+    try 
+        [sztimes_cj, P.exclusion, P.GL, P.GS]=SZDB_CJ(PY_ID);
+        sztimes_cj_name=usec2date(sztimes_cj, 'u');
+        [sztimes_de]=SZDB_DE(PY_ID);
+        sztimes_de_name=usec2date(sztimes_de, 'u');
+    catch
+        sztimes_cj=[];
+        sztimes_cj_name={};
+        sztimes_de=[];
+        sztimes_de_name={};
+    end
+        
+    %eventlisttime=[date2usec(sztimes_cj); date2usec(sztimes_de); [P.maf.event_list{:,1}]'];
+    
+    events_name={sztimes_cj_name; sztimes_de_name; nk_event_name};
+    events_time=[date2usec(sztimes_cj); date2usec(sztimes_de); nk_event_time];
+    
+    [eventlisttime, indextime]=sort(events_time);
+    
+    events_name=
+    
+    %eventlisttime=[date2usec(sztimes_cj)];
+    [P.eventlisttime, indextime]=sort(eventlisttime);
+    P.sztimes=usec2date(P.eventlisttime);
+    %P.sztimes=[date2usec(sztimes_cj); date2usec(sztimes_de); P.eventlisttime];
+   
+
+
+
+end
+

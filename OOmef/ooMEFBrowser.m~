@@ -648,8 +648,9 @@ function EventListBox_Callback(hObject, eventdata, handles)
 P=handles;
 
 index_selected = get(hObject,'Value');
-%list = get(hObject,'String');
-event_time__selected = P.events_time{index_selected}; 
+list = get(hObject,'String');
+
+event_time__selected = list{index_selected}; 
 P.windowstart=date2usec(event_time__selected)-P.windowsize*1e6/2;
 [P.maf, P.eeg, P.labels, P.xeeg]=GetEEGData(P, P.windowstart, P.windowsize*1e6);
 
