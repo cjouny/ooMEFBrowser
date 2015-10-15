@@ -8,6 +8,7 @@ classdef EEG_plot < handle
 
 properties (SetAccess=public)
     plot_handle                     % Handle
+    axe_handle
     position                        % Y position
     eegid
     xdata
@@ -27,6 +28,7 @@ end
     methods
         % Initialize the plot with label
         function EEGPlot=EEG_plot(handle_axe, label, position)
+            EEGPlot.axe_handle=handle_axe;
             EEGPlot.plot_handle=plot(0,0, 'Parent', handle_axe);
             EEGPlot.ylabel=text(0, position, [label '  '], 'HorizontalAlignment','Right', ...
                 'FontWeight', 'normal',...
@@ -41,12 +43,26 @@ end
         end
 
         % Set X and Y data (plotting)
-        function Draw(EEGPlot)
+        function Draw(EEGPlot, decimation)
+            axeposition=getpixelposition(EEGPlot.axe_handle);
+            % Check axis width for pixels size and resample as needed
+            width=axeposition(3);
+            ratio=floor(length(EEGPlot.ydata)/width);
+            if ratio>=2 && decimation,
+                tmp_ydata=decimate(EEGPlot.ydata, ratio);
+                tmp_xdata=downsample(EEGPlot.xdata, ratio);
+            else
+                tmp_xdata=EEGPlot.xdata;
+                tmp_ydata=EEGPlot.ydata;
+            end
+            
             set(EEGPlot.plot_handle,...
-                        'XData', EEGPlot.xdata,...
-                        'YData', EEGPlot.position+EEGPlot.scale*EEGPlot.scalefactor*EEGPlot.ydata,...
+                        'XData', tmp_xdata,...
+                        'YData', EEGPlot.position+EEGPlot.scale*EEGPlot.scalefactor*tmp_ydata,...
                         'Color', EEGPlot.linecolor,...
                         'LineWidth', EEGPlot.linewidth);
+
+            %refreshdata(EEGPlot.plot_handle);
             if EEGPlot.analysis,
                 dd=log10(sum(EEGPlot.ydata.^2))/100;
                 %dd=(linelength(EEGPlot.ydata, length(EEGPlot.ydata), length(EEGPlot.ydata)));

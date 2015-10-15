@@ -6,7 +6,7 @@ function P=OOupdatemefplot(P)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Constants
-interval=1;
+%interval=1; %removed constant - channel space always 1
 ne=1;
 shade=0.2;
 light=0.7;
@@ -15,18 +15,18 @@ codechoice=[shade shade shade;shade shade light;light shade shade;shade light sh
 cbitchoice=[codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; codechoice; ];
 
 
-% Downsampling
-if P.dtoggle,
-    P.FsD=floor(P.Fs/10); % downsample to 1/10 of original Fs
-    reeg=[P.xeeg(:)-P.xeeg(1) P.eeg'];  % downsample x and y
-    reeg=downsample(reeg, 10);
-    Dxeeg=reeg(:,1)';
-    Deeg=double(reeg(:,2:end)');
-else
+% Downsampling (moved to EEGPlot)
+%if P.dtoggle,
+%    P.FsD=floor(P.Fs/10); % downsample to 1/10 of original Fs
+%    reeg=[P.xeeg(:)-P.xeeg(1) P.eeg'];  % downsample x and y
+%    reeg=downsample(reeg, 10);
+%    Dxeeg=reeg(:,1)';
+%    Deeg=double(reeg(:,2:end)');
+%else
     P.FsD=P.Fs;
     Dxeeg=P.xeeg(:)-P.xeeg(1);
     Deeg=double(P.eeg);
-end
+%end
 
 % mode mono vs bipolar
 if strcmp(P.mode,'bipolar'),
@@ -68,7 +68,7 @@ else
     end    
     
 end
-offset=length(Flabels)*interval;
+offset=length(Flabels);
 nsplot=0;
 [S, G, I]=channel_group(Flabels);
 Gcode=unique(G);
@@ -104,7 +104,7 @@ for ngrid=1:length(Gcode),
         P.eega.eegplots(nsplot).xdata=Dxeeg; 
         
 
-        offset=offset-interval;
+        offset=offset-1;
         ne=ne+1;
     end
     
@@ -120,27 +120,28 @@ if P.hfotoggle,
     for nx=1:length(HFOO),
         plotEvent(  P.eega.h, Dxeeg(HFOO(nx)), ...
                     Dxeeg(HFOO(nx)+HFOD(nx)), ...
-                    offset+8*interval/20, ...
-                    offset-8*interval/20, 'Lhfo');
+                    offset+8*1/20, ...
+                    offset-8*1/20, 'Lhfo');
     end
     for nx=1:length(HFOOf),
         plotEvent(  P.eega.h, Dxeeg(HFOOf(nx)), ...
                     Dxeeg(HFOOf(nx)+HFODf(nx)), ...
-                    offset+10*interval/20, ...
-                    offset-10*interval/20, 'Rhfo');
+                    offset+10*1/20, ...
+                    offset-10*1/20, 'Rhfo');
     end
 end
 
 % Plot Events
-delete(findobj(gca, 'Tag', 'SZ'));
+delete(findobj(P.eega.h, 'Tag', 'SZ'));
 W0=P.windowsize;
-if 1,
-    SZtime=date2usec(P.sztimes);
+YL=get(P.eega.h, 'YLim');
+if ~isempty(P.events_time),
+    SZtime=P.events_time;
     idxevt=find(SZtime>=P.xeeg(1) & SZtime<P.xeeg(end));
     if ~isempty(idxevt),
        for ne=1:length(idxevt),
            T0=SZtime(idxevt(ne))-P.xeeg(1);
-           plotEvent( P.eega.h, T0, W0*1e6, length(Flabels)*interval+interval/2, SZtime(idxevt(ne)), 'SZ');
+           plotEvent(P.eega.h, T0, W0*1e6, YL(2), SZtime(idxevt(ne)), 'SZ', P.events_name{idxevt(ne)});
        end
     end
     
@@ -156,14 +157,14 @@ try %#ok<TRYNC> % because stand alone plot do not have those elements. Could be 
     set(P.timemarker, 'XData', [P.windowstart*[1 1] (P.windowstart+P.windowsize*1e6)*[1 1]]);
 end
 
-P.eega.Redraw(P.xtick);
+P.eega.Redraw(P.xtick, P.dtoggle);
 
 guidata(P.mainoomeffigure, P);
 
 %%%%%
 end
 
-function plotEvent(parent, x1, x2, y1, y2, type)
+function plotEvent(parent, x1, x2, y1, y2, type, event_string)
 
     switch type,
         case 'Lhfo',
@@ -175,11 +176,11 @@ function plotEvent(parent, x1, x2, y1, y2, type)
         case 'SZ',
             %disp([x1 x2]);
             %disp([y1 y2]);
-            hp=patch([x1 x1+x2/400 x1+x2/400 x1],[y1 y1 0 0], [0 0 0 0], 'b', 'EdgeColor','none', 'Tag', type, 'Parent', parent);
+            hp=patch([x1 x1+x2/400 x1+x2/400 x1],[y1 y1 -2 -2], [0 0 0 0], 'b', 'EdgeColor','none', 'Tag', type, 'Parent', parent);
             set(hp, 'FaceColor',[0.8 0.8 1], 'FaceAlpha', 0.5);
-            hp=patch([x1 x1+x2/10 x1+x2/10 x1],[y1 y1 y1-y1/25 y1-y1/25], [0 0 0 0], 'b', 'EdgeColor','none', 'Tag', type, 'Parent', parent);
+            hp=patch([x1 x1+x2/10 x1+x2/10 x1],[y1 y1 y1-y1/40 y1-y1/40], [0 0 0 0], 'b', 'EdgeColor','none', 'Tag', type, 'Parent', parent);
             set(hp, 'FaceColor',[0.8 0.8 1], 'FaceAlpha', 0.5);
-            text(x1+x2/20, y1-y1/50, {'Seizure:'; usec2date(y2)}, 'Tag', type, 'HorizontalAlignment', 'Center', 'VerticalAlignment', 'Middle', 'FontWeight','Normal', 'Parent', parent);
+            text(x1+x2/20, y1-y1/80, {event_string; usec2date(y2)}, 'Tag', type, 'HorizontalAlignment', 'Center', 'VerticalAlignment', 'Middle', 'FontWeight','Normal', 'FontSize', 7, 'Parent', parent);
     end
 end
 

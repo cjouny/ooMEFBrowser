@@ -16,6 +16,7 @@
 %   6                : toogle 60Hz notch filter
 %   z                : toggle zscore
 %   g                : open window to specify time
+%   e                : toggle event display
 %   q                : quit
 %
 %   ** right-click channels or their label to hide channels
@@ -39,10 +40,13 @@
 % 09/03/2015: Events plotted as patch for SZ in event list
 % 09/10/2015: Numerous handle fixes to allow multiple figures
 % 09/10/2015: Enable Menu, toolbar and secondary figure for events
+% 09/10/2015: Change axe limites, create events area, and display toggle for events
+% 10/xx/2015: Moved decimate to EEGPlot
+% 10/12/2015: various fixes usec2date, remove 2nd figure
+% 10/12/2015: Added reading CSV for events from NK
+% 10/15/2015: Moved grid infos to separate DAT file
 %
-% TODO: fix filters
-% TODO: clean up folder application
-% TODO: event management from MAF to UI
+% TODO: clean up folder application to be institution independent
 %%
 
 function varargout = ooMEFBrowser(varargin)
@@ -110,8 +114,9 @@ function ooMEFBrowser_OpeningFcn(hObject, ~, handles, varargin)
         end
         if ~isempty(P.maf.filename),
             P.maf=P.maf.ReadALLMAF;
-            P.dtoggle=0;
+            P.dtoggle=1;
             P.typehdr=0;
+            %P.eventlisttime=[P.maf.event_list{:,1}];
         else
             % if not MAF check REC
             %%%%%%%%%%%% REC Header and initialization
@@ -212,16 +217,16 @@ function ooMEFBrowser_OpeningFcn(hObject, ~, handles, varargin)
     end
     P.exclusion={};
     
-    %Reading Events
-    [sztimes_cj, P.exclusion, P.GL, P.GS]=SZDB_CJ(PY_ID);
-    [sztimes_de]=SZDB_DE(PY_ID);
-
-    P.sztimes=[sztimes_cj; sztimes_de];
-    set(P.EventListBox, 'String', P.sztimes);
-
-    
-    %P.eventfigure=figure('Units', 'Norm', 'Position', [0.75 0.1 0.2 0.8], 'visible','off');
-    %P.hEventList = uimulticollist( P.eventfigure, 'units', 'normalized', 'position', [0.05 0.05 0.9 0.9] );
+    % Reading Events
+    [ P.events_name, P.events_time, P.exclusion ] = CompileEvent( fullfile(data_path, PY_ID), PY_ID );
+     
+    convertedtimes=usec2date(P.events_time);
+    for ni=1:length(convertedtimes),
+        listboxinfo{ni}=[P.events_name{ni} '@' convertedtimes{ni}];
+    end
+    set(P.EventListBox, 'String', listboxinfo);
+     
+    [ P.GL, P.GS ] = read_patient_gridinfo( fullfile(data_path, PY_ID), PY_ID );
         
     P.drive=drive;
     P.PY_ID=PY_ID;
@@ -229,6 +234,7 @@ function ooMEFBrowser_OpeningFcn(hObject, ~, handles, varargin)
     
     P.ftoggle=2;
     P.hfotoggle=0;
+    P.evttoggle=1;
     P.filter60=0;
     P.aliasing=1;
     P.xtick=1;
@@ -433,6 +439,14 @@ switch eventdata.Key,
         end
     case 'h',
         P.hfotoggle=1-P.hfotoggle;
+    case 'e',
+        P.evttoggle=1-P.evttoggle;
+        hevts=findobj(P.eega.h, 'Tag', 'SZ');
+        if P.evttoggle, set(hevts,'Visible', 'on');
+        else set(hevts,'Visible', 'off');
+        end
+        guidata(hObject, P);
+        return;
         
     case '6',
         P.filter60=1-P.filter60;
@@ -513,6 +527,7 @@ end
 
 % --- Executes on button press in pushbutton11. (FF - Space bar)
 function pushbutton11_Callback(~, ~, handles)
+%tic;
     P=handles;
     tread=P.windowstart+P.windowsize*1e6+1e6/P.Fs;
     shift=P.windowsize;
@@ -523,6 +538,7 @@ function pushbutton11_Callback(~, ~, handles)
         %guidata(hObject, P);
         OOupdatemefplot(P);
     end
+%    disp(toc);
 end
 
 % --- Executes on button press in pushbutton12.
@@ -537,6 +553,7 @@ global livestream;
     P.play=1;
     guidata(hObject, P);
     while P.play,
+        %tic;
         P=guidata(hObject);
         if livestream,
             % read live data
@@ -545,7 +562,10 @@ global livestream;
         else
             pushbutton11_Callback(hObject, [], P);
         end
-        drawnow; pause(0.01);
+        drawnow;
+        %refreshdata;
+        %pause(0.05);
+        %disp(toc);
     end
 end
 
@@ -633,9 +653,9 @@ function EventListBox_Callback(hObject, eventdata, handles)
 P=handles;
 
 index_selected = get(hObject,'Value');
-list = get(hObject,'String');
-event_time__selected = list{index_selected}; 
-P.windowstart=date2usec(event_time__selected)-P.windowsize*1e6/2;
+%list = get(hObject,'String');
+event_time__selected = P.events_time(index_selected); 
+P.windowstart=event_time__selected-P.windowsize*1e6/2;
 [P.maf, P.eeg, P.labels, P.xeeg]=GetEEGData(P, P.windowstart, P.windowsize*1e6);
 
 OOupdatemefplot(P);

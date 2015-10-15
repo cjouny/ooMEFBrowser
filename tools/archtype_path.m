@@ -1,7 +1,7 @@
-%% ARCH_PATH: Return the path to drive according to the architecture
-%%
-%% CC Jouny - Johns Hopkins University - 2012-2013 (c) 
-%%
+% ARCH_PATH: Return the path to drive according to the architecture
+%
+% CC Jouny - Johns Hopkins University - 2012-2013 (c) 
+
 function data_path=archtype_path(drive, type)
 
 data_path=NaN;
