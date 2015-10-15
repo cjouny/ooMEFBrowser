@@ -77,7 +77,8 @@ classdef MEF_file < handle
                 eegfiledata=single(yread)*MEFFile.header.voltage_conversion_factor; % Calibration appplied here
             end
             if ispc,  % Using MS Visual Studio compiled library with integrated calibration scaling
-                        % From G:\Box Sync\sources\git\mexMEF\x64\Release\mexMEFRead.mexw64
+                        % From
+                        % E:\Dropbox\work\sources\Visual Studio 2013\Projects\mexMEF\x64\Release\mexMEFRead.mexw64
                         % PS: original Mayo code does not compile under
                         % Windows
                 eegfiledata=single(mexMEFRead(fullfile(MEFFile.filepath, MEFFile.filename), double(S0), double(S1)));
