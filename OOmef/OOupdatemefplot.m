@@ -135,8 +135,8 @@ end
 delete(findobj(P.eega.h, 'Tag', 'SZ'));
 W0=P.windowsize;
 YL=get(P.eega.h, 'YLim');
-if ~isempty(P.sztimes),
-    SZtime=date2usec(P.sztimes);
+if ~isempty(P.events_time),
+    SZtime=P.events_time;
     idxevt=find(SZtime>=P.xeeg(1) & SZtime<P.xeeg(end));
     if ~isempty(idxevt),
        for ne=1:length(idxevt),

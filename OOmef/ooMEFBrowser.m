@@ -44,6 +44,7 @@
 % 10/xx/2015: Moved decimate to EEGPlot
 % 10/12/2015: various fixes usec2date, remove 2nd figure
 % 10/12/2015: Added reading CSV for events from NK
+% 10/15/2015: Moved grid infos to separate DAT file
 %
 % TODO: fix filters
 % TODO: clean up folder application
@@ -219,9 +220,10 @@ function ooMEFBrowser_OpeningFcn(hObject, ~, handles, varargin)
     P.exclusion={};
     
     % Reading Events
-    [ P.events_name, P.events_time ] = CompileEvent( data_path, PY_ID );
+    [ P.events_name, P.events_time, P.exclusion ] = CompileEvent( fullfile(data_path, PY_ID), PY_ID );
      set(P.EventListBox, 'String', P.events_name);
      
+    [ P.GL, P.GS ] = read_patient_gridinfo( fullfile(data_path, PY_ID), PY_ID );
         
     P.drive=drive;
     P.PY_ID=PY_ID;
@@ -649,8 +651,8 @@ P=handles;
 
 index_selected = get(hObject,'Value');
 %list = get(hObject,'String');
-event_time__selected = P.events_time{index_selected}; 
-P.windowstart=date2usec(event_time__selected)-P.windowsize*1e6/2;
+event_time__selected = P.events_time(index_selected); 
+P.windowstart=event_time__selected-P.windowsize*1e6/2;
 [P.maf, P.eeg, P.labels, P.xeeg]=GetEEGData(P, P.windowstart, P.windowsize*1e6);
 
 OOupdatemefplot(P);
