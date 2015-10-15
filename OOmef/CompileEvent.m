@@ -6,7 +6,7 @@ function [ events_name, events_time ] = CompileEvent( data_path, PY_ID )
     
     % Reading custom grid and seizure information if available
     try 
-        [sztimes_cj, P.exclusion, P.GL, P.GS]=SZDB_CJ(PY_ID);
+        [sztimes_cj, P.exclusion]=SZDB_CJ(PY_ID);
         sztimes_cj_name=usec2date(sztimes_cj, 'u');
         [sztimes_de]=SZDB_DE(PY_ID);
         sztimes_de_name=usec2date(sztimes_de, 'u');
