@@ -141,7 +141,7 @@ if ~isempty(P.events_time),
     if ~isempty(idxevt),
        for ne=1:length(idxevt),
            T0=SZtime(idxevt(ne))-P.xeeg(1);
-           plotEvent(P.eega.h, T0, W0*1e6, YL(2), SZtime(idxevt(ne)), 'SZ');
+           plotEvent(P.eega.h, T0, W0*1e6, YL(2), SZtime(idxevt(ne)), 'SZ', P.events_name{idxevt(ne)});
        end
     end
     
@@ -164,7 +164,7 @@ guidata(P.mainoomeffigure, P);
 %%%%%
 end
 
-function plotEvent(parent, x1, x2, y1, y2, type)
+function plotEvent(parent, x1, x2, y1, y2, type, event_string)
 
     switch type,
         case 'Lhfo',
@@ -180,7 +180,7 @@ function plotEvent(parent, x1, x2, y1, y2, type)
             set(hp, 'FaceColor',[0.8 0.8 1], 'FaceAlpha', 0.5);
             hp=patch([x1 x1+x2/10 x1+x2/10 x1],[y1 y1 y1-y1/40 y1-y1/40], [0 0 0 0], 'b', 'EdgeColor','none', 'Tag', type, 'Parent', parent);
             set(hp, 'FaceColor',[0.8 0.8 1], 'FaceAlpha', 0.5);
-            text(x1+x2/20, y1-y1/80, {'Seizure:'; usec2date(y2)}, 'Tag', type, 'HorizontalAlignment', 'Center', 'VerticalAlignment', 'Middle', 'FontWeight','Normal', 'FontSize', 7, 'Parent', parent);
+            text(x1+x2/20, y1-y1/80, {event_string; usec2date(y2)}, 'Tag', type, 'HorizontalAlignment', 'Center', 'VerticalAlignment', 'Middle', 'FontWeight','Normal', 'FontSize', 7, 'Parent', parent);
     end
 end
 

@@ -11,6 +11,11 @@ if nargin==1,
     formatstr=0;
 end
 
+if isempty(timenum),
+    dateconvert={};
+    return;
+end
+
 if length(timenum)>1,
     for ni=length(timenum):-1:1,
         dateconvert{ni}=usec2date(timenum(ni), formatstr); 
