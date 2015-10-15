@@ -46,9 +46,7 @@
 % 10/12/2015: Added reading CSV for events from NK
 % 10/15/2015: Moved grid infos to separate DAT file
 %
-% TODO: fix filters
-% TODO: clean up folder application
-% TODO: event management from MAF to UI
+% TODO: clean up folder application to be institution independent
 %%
 
 function varargout = ooMEFBrowser(varargin)
@@ -221,7 +219,12 @@ function ooMEFBrowser_OpeningFcn(hObject, ~, handles, varargin)
     
     % Reading Events
     [ P.events_name, P.events_time, P.exclusion ] = CompileEvent( fullfile(data_path, PY_ID), PY_ID );
-     set(P.EventListBox, 'String', P.events_name);
+     
+    convertedtimes=usec2date(P.events_time);
+    for ni=1:length(convertedtimes),
+        listboxinfo{ni}=[P.events_name{ni} '@' convertedtimes{ni}];
+    end
+    set(P.EventListBox, 'String', listboxinfo);
      
     [ P.GL, P.GS ] = read_patient_gridinfo( fullfile(data_path, PY_ID), PY_ID );
         
