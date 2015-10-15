@@ -3,7 +3,6 @@ Rpath=pwd;
 oomef='OOmef';
 tools='tools';
 
-addpath(Rpath);
 addpath(fullfile(Rpath, oomef));
 addpath(fullfile(Rpath, tools));
 
