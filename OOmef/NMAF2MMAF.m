@@ -15,6 +15,11 @@ NET.addAssembly(fullfile(localpath, 'MEF.dll')); % From G:\Dropbox\work\sources\
 mafNETfile=MEF.MAFFile(fullfile(filepath, filename));   % .NET class version
 mafNETfile.readMAF();                                   % Read MAF file
 
+if ~mafNETfile.valid,
+    maf.mef_valid=0;
+    return;
+end
+
 % Now convert it to Matlab class
 maf.PYID=char(mafNETfile.subject.Subject_nbr);
 maf.nb_episodes=mafNETfile.timeline.nperiod;

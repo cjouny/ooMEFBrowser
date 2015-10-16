@@ -106,8 +106,10 @@ classdef MAF_file < handle
                     MAFFile.allmafread=true;
                 else
                     MAFFile=NMAF2MMAF(MAFFile, MAFFile.filepath, MAFFile.filename); % Using .NET MAF reader
-                    MAFFile.allmafread=true;
-                    save( fullfile(MAFFile.filepath, [MAFFile.filename(1:end-1) 't']), 'MAFFile'); % save a MAT of the MAF
+                    if MAFFile.mef_valid,
+                        MAFFile.allmafread=true;
+                        save( fullfile(MAFFile.filepath, [MAFFile.filename(1:end-1) 't']), 'MAFFile'); % save a MAT of the MAF
+                    end
                 end
             end
         end
