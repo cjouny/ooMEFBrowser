@@ -73,11 +73,6 @@ end
 % --- Executes just before MEFBrowser is made visible.
 function ooMEFBrowser_OpeningFcn(hObject, ~, handles, varargin)
 
-    if length(varargin)>=2,
-        drive=varargin{1};
-        PY_ID=varargin{2};
-    end
-    
     global warninglevel;
     global livestream;
 
@@ -87,14 +82,10 @@ function ooMEFBrowser_OpeningFcn(hObject, ~, handles, varargin)
     else
         livestream=0;
     end
-        
-    warninglevel=0;
-    
-    P=handles;                                              % Main data structure is the handles from Matlab figure
-    P.maf=MAF_file;                                         % Create main MAF file class for either types and add it to P
-    
+
+    % Initialization of the figure
+
     % Windows position
-    
     leftmargin=0.04;
     xwidth=0.835;
     lowermargin=0.045;
@@ -104,6 +95,22 @@ function ooMEFBrowser_OpeningFcn(hObject, ~, handles, varargin)
     
     mainwindowpos = [leftmargin lowermargin xwidth yheight];
     timeaxispos   = [leftmargin lowermargintime xwidth yheighttime];
+    
+    
+    if length(varargin)>=2,
+        drive=varargin{1};
+        PY_ID=varargin{2};
+    end
+
+    if isempty(varargin),
+        % open empty browser
+        
+    end
+    
+    warninglevel=0;
+    P=handles;                                              % Main data structure is the handles from Matlab figure
+    P.maf=MAF_file;                                         % Create main MAF file class for either types and add it to P
+    
     
     
     if ~livestream,
@@ -468,7 +475,7 @@ if eventdata.Key~='q',
 end
 end
 
-% group radio panel
+%% group radio panel for bipolar/monopolar mode
 function uipanelmontage_SelectionChangeFcn(~, eventdata, handles) 
     P=handles;
     switch get(eventdata.NewValue,'Tag') % Get Tag of selected object.
@@ -480,7 +487,7 @@ function uipanelmontage_SelectionChangeFcn(~, eventdata, handles)
     OOupdatemefplot(P);
 end
 
-% --- Executes on button press in pushbutton8. (Backward <)
+%% --- Executes on button press in pushbutton8. (Backward <)
 function pushbutton8_Callback(~, ~, handles)
     P=handles;
     shift=P.windowsize/10;
@@ -495,8 +502,8 @@ function pushbutton8_Callback(~, ~, handles)
     end
 end
 
-% --- Executes on button press in pushbutton9. (Forward > )
-function pushbutton9_Callback(~, ~, handles) %#ok<*INUSD,*DEFNU>
+%% --- Executes on button press in pushbutton9. (Forward > )
+function pushbutton9_Callback(~, ~, handles) 
     P=handles;
     tread=P.windowstart+P.windowsize*1e6+1e6/P.Fs;
     shift=P.windowsize/10;
@@ -506,54 +513,41 @@ function pushbutton9_Callback(~, ~, handles) %#ok<*INUSD,*DEFNU>
         P.eeg=[P.eeg(:,(laneeg+1):end) neeg(:,:)];
         P.xeeg=[P.xeeg((laneeg+1):end) xeeg];
         P.windowstart=P.windowstart+shift*1e6;
-        %guidata(hObject, P);
         OOupdatemefplot(P);
     end
 end
 
-% --- Executes on button press in pushbutton10. (Backward - Backspace key)
+%% --- Executes on button press in pushbutton10. (Backward - Backspace key)
 function pushbutton10_Callback(~, ~, handles)
     P=handles;
     tread=P.windowstart-P.windowsize*1e6;
     shift=P.windowsize;
     if tread>=P.T0, 
         [P.maf, P.eeg, ~, P.xeeg]=GetEEGData(P, tread, shift*1e6);
-        %P.xeeg=P.maf.mef_streams(find(P.maf.mef_included==1, 1, 'first')).tEEG;
         P.windowstart=P.windowstart-shift*1e6;
-        %guidata(hObject, P);
         OOupdatemefplot(P);
     end
 end
 
-% --- Executes on button press in pushbutton11. (FF - Space bar)
+%% --- Executes on button press in pushbutton11. (FF - Space bar)
 function pushbutton11_Callback(~, ~, handles)
-%tic;
     P=handles;
     tread=P.windowstart+P.windowsize*1e6+1e6/P.Fs;
     shift=P.windowsize;
     if tread+shift*1e6<=P.Tend, 
         [P.maf, P.eeg, ~, P.xeeg]=GetEEGData(P, tread, shift*1e6);
-        %P.xeeg=P.maf.mef_streams(find(P.maf.mef_included==1, 1, 'first')).tEEG;
         P.windowstart=P.windowstart+shift*1e6;
-        %guidata(hObject, P);
         OOupdatemefplot(P);
     end
-%    disp(toc);
 end
 
-% --- Executes on button press in pushbutton12.
-function pushbutton12_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton12 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-%    handles.eega.ClearAllPlots();
+%% --- Executes on button press in pushbutton12. (Play)
+function pushbutton12_Callback(hObject, ~, handles)
 global livestream;
-
-    P=guidata(hObject);   
+    P=handles;   
     P.play=1;
     guidata(hObject, P);
     while P.play,
-        %tic;
         P=guidata(hObject);
         if livestream,
             % read live data
@@ -563,23 +557,17 @@ global livestream;
             pushbutton11_Callback(hObject, [], P);
         end
         drawnow;
-        %refreshdata;
-        %pause(0.05);
-        %disp(toc);
     end
 end
 
-% --- Executes on button press in pushbutton13.
-function pushbutton13_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton13 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-    P=guidata(hObject);
+%% --- Executes on button press in pushbutton13.
+function pushbutton13_Callback(hObject, ~, handles)
+    P=handles;
     P.play=0;
     guidata(hObject, P);
 end
 
-% --- Executes on selection change in ws.
+%% --- Executes on selection change in ws (Window Size).
 function ws_Callback(hObject, ~, handles)
     P=handles;
     items = get(hObject,'String');
@@ -594,7 +582,7 @@ function ws_Callback(hObject, ~, handles)
     end
 end
 
-% --- Windows Size Popup
+%% --- Populate the Windows Size Popup
 function ws_CreateFcn(hObject, eventdata, handles)
     if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
         set(hObject,'BackgroundColor','white');
@@ -602,7 +590,7 @@ function ws_CreateFcn(hObject, eventdata, handles)
     set(hObject, 'String', [0.001;0.01;0.05;0.1;0.25;0.5;1;2;4;5;10;20;30;60;120;300;600], 'Value', 11);
 end
 
-%%% Reading function
+%% Reading function to get EEG data
 function [maf, eeg, labels, xeeg]=GetEEGData(P, windowstart, windowsize)
 
 maf=P.maf;
@@ -642,48 +630,38 @@ function P=GetLiveData(P)
 end
 
 
-% --- Executes on selection change in EventListBox.
-function EventListBox_Callback(hObject, eventdata, handles)
-% hObject    handle to EventListBox (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+%% --- Executes on selection change in EventListBox.
+function EventListBox_Callback(hObject, ~, handles)
+    P=handles;
+    index_selected = get(hObject,'Value');
+    event_time__selected = P.events_time(index_selected); 
+    P.windowstart=event_time__selected-P.windowsize*1e6/2;
+    [P.maf, P.eeg, P.labels, P.xeeg]=GetEEGData(P, P.windowstart, P.windowsize*1e6);
 
-% Hints: contents = cellstr(get(hObject,'String')) returns EventListBox contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from EventListBox
-P=handles;
-
-index_selected = get(hObject,'Value');
-%list = get(hObject,'String');
-event_time__selected = P.events_time(index_selected); 
-P.windowstart=event_time__selected-P.windowsize*1e6/2;
-[P.maf, P.eeg, P.labels, P.xeeg]=GetEEGData(P, P.windowstart, P.windowsize*1e6);
-
-OOupdatemefplot(P);
-
+    OOupdatemefplot(P);
 end
 
-% --- Executes during object creation, after setting all properties.
-function EventListBox_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to EventListBox (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: listbox controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-%P=handles;
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
+%% --- Executes during object creation, after setting all properties.
+function EventListBox_CreateFcn(hObject, ~, ~)
+    if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+        set(hObject,'BackgroundColor','white');
+    end
 end
 
 
-% --------------------------------------------------------------------
+%% Close the app ---------------------------------------------------------
 function CloseMenuItem_Callback(hObject, eventdata, handles)
-% hObject    handle to CloseMenuItem (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
     P=handles;
     close(P.eventfigure);
     close(P.mainoomeffigure);
 end
+
+
+% --------------------------------------------------------------------
+function OpenMenuItem_Callback(hObject, eventdata, handles)
+P=handles;
+[FileName,PathName,FilterIndex] = uigetfile('*.maf','Choose MAF file');
+
+
+end
+
