@@ -156,7 +156,7 @@ function ooMEFBrowser_OpeningFcn(hObject, ~, handles, varargin)
 end
 
 %% Jump time bar
-function PointNClickTimeBar(hObject, eventdata)
+function PointNClickTimeBar(hObject, ~)
     P=guidata(hObject);
     axesHandle  = get(hObject,'Parent');
     coordinates = get(axesHandle,'CurrentPoint');  % X scale is in microseconds
@@ -166,7 +166,7 @@ function PointNClickTimeBar(hObject, eventdata)
 end
 
 %% Update Channel selection from the check box array 
-function UpdateChannelSelect(hObject, eventdata)
+function UpdateChannelSelect(hObject, ~)
     global streamtype;
     
     P=guidata(hObject);
@@ -191,7 +191,7 @@ function varargout = ooMEFBrowser_OutputFcn(~, ~, handles)
 end
 
 % --- Executes on key press with focus on mainoomeffigure and none of its controls.
-function MEF_KeyPressFcn(hObject, eventdata, handles) 
+function MEF_KeyPressFcn(hObject, eventdata, handles)  %#ok<*DEFNU>
 
 P=handles;
 switch eventdata.Key,
@@ -403,7 +403,7 @@ function [maf, eeg, labels, xeeg]=GetEEGData(P, windowstart, windowsize)
 end
 
 function P=GetLiveData(P)
-    pT0=P.windowstart;
+    P.T0=P.windowstart;
     data=P.eeg;
     datanum=size(data, 2);
     [chunk,~] = P.LSLinlet.pull_chunk();
@@ -411,7 +411,7 @@ function P=GetLiveData(P)
     
     if (nreadframe>0)
         data(:, 1:datanum-nreadframe) = data(:, nreadframe+1:datanum);
-        data(:, datanum-nreadframe+1:datanum)=chunk(find(P.maf.mef_valid),:);
+        data(:, datanum-nreadframe+1:datanum)=chunk(find(P.maf.mef_valid),:); %#ok<FNDSB>
     end
     T0=now;
     usec=rem(rem(T0,1)*86400,1)*1000*1000;
@@ -522,7 +522,7 @@ function InitDisplay(hObject)
     convertedtimes=usec2date(P.events_time);
     listboxinfo={};
     for ni=1:length(convertedtimes),
-        listboxinfo{ni}=[P.events_name{ni} '@' convertedtimes{ni}];
+        listboxinfo{ni}=[P.events_name{ni} '@' convertedtimes{ni}]; %#ok<AGROW>
     end
     set(P.EventListBox, 'String', listboxinfo);
      
