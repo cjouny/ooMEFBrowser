@@ -118,23 +118,12 @@ for ne=1:length(maf.stream_label_list),
     maf.mef_included(ne)=1;
 end
 
-%maf.mef_streams=maf.mef_streams(find(maf.mef_included)); % remove to fix
-%error when reading only few channels as mef included and streams did not
-%match
-%maf.stream_label_list=maf.stream_label_list(find(maf.mef_included));
 maf.nb_stream=length(maf.mef_streams);
-
 [maf, eeg, labels, xeeg]=maf.GetEEGData(utime0, uduration);
-
-
 
 if bipolar, 
     [eeg, labels]=applymtgmef(eeg, labels, GL, GS);
 end
-
-
-
-
 
 end                               
 

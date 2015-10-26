@@ -1,52 +1,33 @@
 %% ooMEFBrowser: EEG Browser for MEF files
 %
-% MEFBrowser('drive','PYID', time);
+% ooMEFBrowser Open the UI for reading MEF files
+% 
+% Optional parameters 
+% 
+% RM: Room number for live streaming (no other paramters accepted)
+%       >    ooMEFBrowser(55)
 %
-% drive: letter of the data drive
-% PYID: patient code
+% Drive: letter of the data drive
+% PYID: patient code/folder name
+%       >   ooMEFBrowser('R','PY14N012', '2001/01/01 13:00:00')
+% 
 % Optional parameters:
-% time: can be a string or time in microseconds
+% Time: can be a string or time in microseconds
 %
 % Keyboard Shortcuts:
 %   Left/Right arrow : move forward/backward 1/10th window
 %   Space/Backspace  : move forward/backward one window
 %   Up/Down arrow    : Increase/decrease sensitivity by factor 2
 %   f                : cycle various filters (No, 0.5Hz, 80-150Hz, 200-400 Hz)
-%   d                : toggle sample decimation by 1/10 (no AA correction)
+%   d                : toggle sample downsampling
 %   6                : toogle 60Hz notch filter
 %   z                : toggle zscore
 %   g                : open window to specify time
-%   e                : toggle event display
 %   q                : quit
 %
 %   ** right-click channels or their label to hide channels
-%
-% Example:> ooMEFBrowser('R','PY14N004', '01/01/2011 01:23:45')
-%
+
 %% CC Jouny - Johns Hopkins University - 2012-2015 (c) 
-%
-% Updates:
-% 09/09/2014: added timeaxe jump / fix downsampling & filter / fix scaling
-% 09/17/2014: added time label / time marker / clean up code
-% 09/18/2014: round jumping to nearest second
-% 10/12/2014: hide/show channels
-% 10/20/2014: updated for Matlab2014b
-% 10/23/2014: added partial REC files support
-% 11/05/2014: Fixed disappearing labels
-% 12/10/2014: Added Live Streaming from NK DLL
-% 12/12/2014: Changed Streaming to LSL DLL
-% 03/01/2015: Added MP
-% 07/14/2015: Added event list from SZDB.m
-% 09/03/2015: Events plotted as patch for SZ in event list
-% 09/10/2015: Numerous handle fixes to allow multiple figures
-% 09/10/2015: Enable Menu, toolbar and secondary figure for events
-% 09/10/2015: Change axe limites, create events area, and display toggle for events
-% 10/xx/2015: Moved decimate to EEGPlot
-% 10/12/2015: various fixes usec2date, remove 2nd figure
-% 10/12/2015: Added reading CSV for events from NK
-% 10/15/2015: Moved grid infos to separate DAT file
-%
-% TODO: clean up folder application to be institution independent
 %%
 
 function varargout = ooMEFBrowser(varargin)
@@ -74,13 +55,32 @@ end
 function ooMEFBrowser_OpeningFcn(hObject, ~, handles, varargin)
 
     global warninglevel;
-    global livestream;
+    global streamtype;
 
+    P=handles;                                              % Main data structure is the handles from Matlab figure
+    P.windowstart=0;
+    
     if length(varargin)==1 && (varargin{1}==55 || varargin{1}==56) ,
-        livestream=1;
+        streamtype=2; % Live
         RM=varargin{1};
     else
-        livestream=0;
+        streamtype=1; % Offline
+        if length(varargin)>=2,
+            drive=varargin{1};
+            PY_ID=varargin{2};
+            if length(varargin)>=3,
+                timestart=varargin{3};
+                if ischar(timestart),
+                    P.windowstart=date2usec(timestart);
+                else
+                    P.windowstart=timestart;
+                end
+            end
+        end
+        if isempty(varargin),
+            % open empty browser
+            streamtype=0; %No file
+        end
     end
 
     % Initialization of the figure
@@ -96,149 +96,16 @@ function ooMEFBrowser_OpeningFcn(hObject, ~, handles, varargin)
     mainwindowpos = [leftmargin lowermargin xwidth yheight];
     timeaxispos   = [leftmargin lowermargintime xwidth yheighttime];
     
-    
-    if length(varargin)>=2,
-        drive=varargin{1};
-        PY_ID=varargin{2};
-    end
+    % Create MAIN Object axe
+    P.eega=EEG_axes(P.mainoomeffigure, mainwindowpos);
+    %Create UI axes for time navigation
+    P.timeaxe=axes('Parent', P.mainoomeffigure ,'Units','Normalized','Position', timeaxispos, 'Visible','off');
 
-    if isempty(varargin),
-        % open empty browser
-        
-    end
     
     warninglevel=0;
-    P=handles;                                              % Main data structure is the handles from Matlab figure
     P.maf=MAF_file;                                         % Create main MAF file class for either types and add it to P
     
-    
-    
-    if ~livestream,
-        %%%%%%%%%%%% MEF Header and initialization
-        data_path =  archtype_path(drive, 'MEF');                       % Create and populate the class
-        if exist( fullfile(data_path, PY_ID, [PY_ID '.maf']), 'file')==2,
-            P.maf.OpenMAF( fullfile(data_path, PY_ID) , [PY_ID '.maf']);
-        end
-        if ~isempty(P.maf.filename),
-            P.maf=P.maf.ReadALLMAF;
-            P.dtoggle=1;
-            P.typehdr=0;
-            %P.eventlisttime=[P.maf.event_list{:,1}];
-        else
-            % if not MAF check REC
-            %%%%%%%%%%%% REC Header and initialization
-            data_path =  archtype_path(drive, 'HDR');                       % Create and populate the class
-            datasets=getDataset4Session(PY_ID);
-            if isempty(datasets),
-                     delete(hObject);
-                     return;
-            end
-            nx=1;
-            for nd=1:length(datasets.Path),
-                P.recfolder{nd}=fullfile(data_path, datasets.Path{nd});
-                headerfilenpath=fullfile(data_path, datasets.Path{nd}, datasets.Header{nd});
-                if exist(headerfilenpath, 'file')~=2,
-                    continue;
-                end
-                P.hdr{nd}=readhdr(headerfilenpath);
-                lstname=P.hdr{nd}.file_fmt.List_file;
-                [tfr, P.filen{nd}]=readlist(fullfile(data_path, datasets.Path{nd}, lstname));
-                for ns=1:size(tfr,1),
-                    P.maf.start_times(nx)=date2usec(datestr(sum(tfr(ns,[1 3])/86400)));
-                    P.maf.end_times(nx)=P.maf.start_times(nx)+tfr(ns,2)*1e6;
-                    P.maf.nb_stream(nx,:)=[nd ns]; % using nb_stream field to track folder number for REC files and file number in folder
-                    nx=nx+1;
-                end
-            end
-            if nx==1, % no REC header files found
-                delete(hObject);
-                return;
-            end
-            P.maf.PYID=PY_ID;
-            P.maf.nb_episodes=length(P.maf.start_times);
-            P.maf.stream_label_list=P.hdr{1}.channels.labels; % take channels from first folder for now
-            P.maf.nb_sources=length(P.maf.stream_label_list);
-            P.maf.mef_included=ones(1,P.maf.nb_sources);
-
-            P.dtoggle=0;
-            P.typehdr=1;
-        end
-    else
-        %Livestream initialization
-        p0=pwd;
-        P.LSLlib = lsl_loadlib();
-        result = {};
-        while isempty(result)
-            result = lsl_resolve_byprop(P.LSLlib,'source_id', ['nkroom' num2str(RM)]); end 
-        P.LSLinlet = lsl_inlet(result{1});
-        
-        P.LSLinfo=P.LSLinlet.info;
-        ch = P.LSLinfo.desc().child('channels').child('channel');
-        channels = {};
-        indexdropch=[];
-        indexch=0;
-        while ~ch.empty()
-            name = ch.child_value_n('label');
-            indexch=indexch+1;
-            if name,
-                channels{end+1} = name; %#ok<AGROW>
-            else
-                indexdropch=[indexdropch indexch]; %#ok<AGROW>
-            end
-            ch = ch.next_sibling_n('channel');
-        end
-        P.maf.stream_label_list=channels;
-        P.labels=P.maf.stream_label_list;
-        
-        if length(channels) ~= P.LSLinfo.channel_count(),
-            P.maf.mef_valid=ones(1,P.LSLinfo.channel_count());
-            P.maf.mef_valid(indexdropch)=0;
-            disp([int2str(length(indexdropch)) ' empty channels dropped']); % if empty channel are dropped, need to save the index of channels to drop from the stream chunk
-        end
-        
-        drive='R';
-        PY_ID='PY99N999';
-        P.maf.nb_stream=length(P.maf.stream_label_list);
-        P.maf.nb_sources=length(P.maf.stream_label_list);
-        P.maf.start_times(1)=date2usec(datestr(now));
-        P.maf.end_times(1)=date2usec(datestr(now))+3600*1e6;
-        P.dtoggle=0;
-        cd(p0);
-    end
-    
-    %%%%
-    
-    %% Common code MAF & REC
-    str=sprintf('Patient Code: %s', PY_ID);
-    set(P.patienttext, 'String', str, 'HorizontalAlign', 'center');
-
-    if length(varargin)>=3,
-        timestart=varargin{3};
-        if ischar(timestart),
-            P.windowstart=date2usec(timestart);
-        else
-            P.windowstart=timestart;
-        end
-    else
-        P.windowstart=P.maf.start_times(1);
-    end
-    P.exclusion={};
-    
-    % Reading Events
-    [ P.events_name, P.events_time, P.exclusion ] = CompileEvent( fullfile(data_path, PY_ID), PY_ID );
-     
-    convertedtimes=usec2date(P.events_time);
-    for ni=1:length(convertedtimes),
-        listboxinfo{ni}=[P.events_name{ni} '@' convertedtimes{ni}];
-    end
-    set(P.EventListBox, 'String', listboxinfo);
-     
-    [ P.GL, P.GS ] = read_patient_gridinfo( fullfile(data_path, PY_ID), PY_ID );
-        
-    P.drive=drive;
-    P.PY_ID=PY_ID;
-    P.inclusion={};
-    
+    % Constants
     P.ftoggle=2;
     P.hfotoggle=0;
     P.evttoggle=1;
@@ -253,104 +120,43 @@ function ooMEFBrowser_OpeningFcn(hObject, ~, handles, varargin)
 
     P.windowchoice={0.001;0.01;0.05;0.1;0.25;0.5;1;2;4;5;10;20;30;60;120;300;600};
     P.windowsize=10;
-    if livestream, P.windowsize=5; end
 
+    P.exclusion={};
+    P.inclusion={};
     P.mode='monopolar';
-    
     P.play=0;
-
-    P.T0=P.maf.start_times(1);
-    P.Tend=P.maf.end_times(end);
-
-    inclusion={}; %{'PFD'};
-    
-    P.maf.UpdateChannelSelection(inclusion, P.exclusion);
-    % create UI electrodes grid panel entries
-    [S, G, ~]=channel_group(P.maf.stream_label_list);
-    Gcode=unique(G);
-    % Loop on grid
-    for ngrid=1:length(Gcode), 
-        idx=find(G==Gcode(ngrid));  % index of channels in this grid
-        rootidx= isstrprop(S{idx(1)}, 'alpha');
-        P.grid_label{ngrid}=S{idx(1)}(rootidx); 
-        P.grid_inclusion(ngrid)=1;
-        even=1-mod(ngrid,2);
-        row=floor((ngrid-1)/2)+1;
-        P.cbh(ngrid) = uicontrol('Parent',P.uipanelelectrodes,'Style','checkbox',...
-                    'String',P.grid_label{ngrid},...
-                    'Value',1,...
-                    'Units','normalized',...
-                    'FontSize', 7,...
-                    'Position',[0.05+even*0.5, 1-row*0.075, 0.4, 0.05],...
-                    'userdata', ngrid,...
-                    'Callback',@UpdateChannelSelect);
-    end
-    
-    % Create MAIN Object axe
-    P.eega=EEG_axes(P.mainoomeffigure, mainwindowpos);
-    
-    %Create UI axes for time navigation
-    P.timeaxe=axes('Parent', P.mainoomeffigure ,'Units','Normalized','Position', timeaxispos);
-    
-    set(P.timeaxe, 'XTick', [], 'YTick', [], 'Box', 'off', 'visible','off');
-    set(P.timeaxe, 'XLim', [P.T0 P.Tend]);
-    for nepisode=1:length(P.maf.start_times),
-        set(P.timeaxe, 'NextPlot','Add');
-        t0=P.maf.start_times(nepisode);
-        t1=P.maf.end_times(nepisode);
-        hp=patch([t0 t1 t1 t0], [0 0 1 1], 'g', 'FaceColor', [0.3 0.7 0.3],  'EdgeColor','none', 'Parent', P.timeaxe);
-        set(hp, 'ButtonDownFcn', @PointNClickTimeBar);
-    end
-    % Add Dates / Time Scale
-    D0=(floor(P.T0/1e6/3600/24)*24*3600*1e6);
-    D1=(ceil(P.Tend/1e6/3600/24)*24*3600*1e6);
-    iList=[1 2 3 6 12 24 48 72 96];
-    interval=1;
-    xticktime=D0:iList(interval)*3600*1e6:D1;
-    while length(xticktime)>10 && interval<9,
-        interval=interval+1;
-        xticktime=D0:iList(interval)*3600*1e6:D1;
-    end
-    if interval<6,
-        formattime=0;
-    else
-        formattime=1;
-    end
-    set(P.timeaxe, 'XLim', [D0 D1]);
-    for nt=1:length(xticktime)-1,
-        text(xticktime(nt), -0.2, usec2date(xticktime(nt), formattime), 'FontSize', 7, 'HorizontalAlign','center', 'VerticalAlign','top', 'FontName','Arial Rounded MT', 'Parent', P.timeaxe);
-        plot([1 1]*xticktime(nt), [0 1], 'k:', 'LineW',1, 'Parent', P.timeaxe);
-    end
-    % Time marker
-    P.timemarker=patch([P.windowstart*[1 1] (P.windowstart+P.windowsize*1e6)*[1 1]], [0 1 1 0], 'r', 'EdgeColor', 'r', 'LineW', 4, 'Parent', P.timeaxe);
-    
-    if ~livestream,
-        %%%%%%%%%%%%%%%%%%%%%%%%%%% First Read
-        [P.maf, P.eeg, P.labels, P.xeeg]=GetEEGData(P, P.windowstart, P.windowsize*1e6);
-
-        if P.typehdr,
-            P.Fs=P.hdr{1}.file_fmt.Samp_rate;
-        else
-            P.Fs=P.maf.mef_streams(find(P.maf.mef_included==1, 1, 'first')).fs;
-        end
-    else
-        P.Fs=double(P.LSLinfo.nominal_srate());
-        P.ftoggle=1; % no filter
-        datanum = P.Fs*P.windowsize;
-        P.eeg = zeros(P.maf.nb_stream, datanum);
-        P=GetLiveData(P);
-    end
-    P.FsD=P.Fs; % default to 1/10th only set if downsampling
-    
-    
 
     % Choose default command line output for MEFBrowser
     P.output = hObject;
-    OOupdatemefplot(P);
+    
+    switch streamtype,
+        case 0
+            % Empty browser
+            guidata(hObject, P);
+        case 1
+            % Offline file from cmd line
+            P.drive=drive;
+            P.PY_ID=PY_ID;
+            data_path =  archtype_path(drive, 'MEF');
+            PathName=fullfile(data_path, PY_ID);
+            FileName=[PY_ID '.maf'];
+            P=OpenOfflineFile(P, PathName, FileName);
+            guidata(hObject, P);
+            InitDisplay(hObject);
+        case 2
+            % Livestream initialization
+            P=OpenLiveStream(P, RM);
+            guidata(hObject, P);
+            InitDisplay(hObject);
+        otherwise
+            guidata(hObject, P);
+    end
+   
+
 end
 
 %% Jump time bar
-function PointNClickTimeBar(hObject, eventdata)
+function PointNClickTimeBar(hObject, ~)
     P=guidata(hObject);
     axesHandle  = get(hObject,'Parent');
     coordinates = get(axesHandle,'CurrentPoint');  % X scale is in microseconds
@@ -360,8 +166,8 @@ function PointNClickTimeBar(hObject, eventdata)
 end
 
 %% Update Channel selection from the check box array 
-function UpdateChannelSelect(hObject, eventdata)
-    global livestream;
+function UpdateChannelSelect(hObject, ~)
+    global streamtype;
     
     P=guidata(hObject);
     val=get(hObject, 'Value');
@@ -371,7 +177,7 @@ function UpdateChannelSelect(hObject, eventdata)
     exclusion_select=P.grid_label(find(P.grid_inclusion==0)); %#ok<FNDSB>
     exclusion=[exclusion_select(:); P.exclusion];
     P.maf=P.maf.UpdateChannelSelection(P.grid_label(find(P.grid_inclusion)), exclusion); %#ok<FNDSB>
-    if livestream,
+    if streamtype==2,
         P=GetLiveData(P);
     else
         [P.maf, P.eeg, P.labels, P.xeeg]=GetEEGData(P, P.windowstart, P.windowsize*1e6);
@@ -385,7 +191,7 @@ function varargout = ooMEFBrowser_OutputFcn(~, ~, handles)
 end
 
 % --- Executes on key press with focus on mainoomeffigure and none of its controls.
-function MEF_KeyPressFcn(hObject, eventdata, handles) 
+function MEF_KeyPressFcn(hObject, eventdata, handles)  %#ok<*DEFNU>
 
 P=handles;
 switch eventdata.Key,
@@ -543,13 +349,13 @@ end
 
 %% --- Executes on button press in pushbutton12. (Play)
 function pushbutton12_Callback(hObject, ~, handles)
-global livestream;
+global streamtype;
     P=handles;   
     P.play=1;
     guidata(hObject, P);
     while P.play,
         P=guidata(hObject);
-        if livestream,
+        if streamtype==2,
             % read live data
             P=GetLiveData(P);
             OOupdatemefplot(P);
@@ -583,7 +389,7 @@ function ws_Callback(hObject, ~, handles)
 end
 
 %% --- Populate the Windows Size Popup
-function ws_CreateFcn(hObject, eventdata, handles)
+function ws_CreateFcn(hObject, ~, ~)
     if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
         set(hObject,'BackgroundColor','white');
     end
@@ -592,24 +398,12 @@ end
 
 %% Reading function to get EEG data
 function [maf, eeg, labels, xeeg]=GetEEGData(P, windowstart, windowsize)
-
-maf=P.maf;
-if P.typehdr,
-    [eeg, labels, xeeg]=RECreadeeg(P, windowstart, windowsize);
-    if size(eeg,1)~=length(P.maf.mef_included),
-        maf.nb_sources=size(eeg,1);
-        maf.mef_included=ones(1,maf.nb_sources);
-        maf.stream_label_list=labels;
-    end
-    eeg=eeg(find(maf.mef_included),:); %#ok<FNDSB>
-    labels=labels(find(maf.mef_included)); %#ok<FNDSB>
-else
+    maf=P.maf;
     [maf, eeg, labels, xeeg]=maf.GetEEGData(windowstart, windowsize);
-end
 end
 
 function P=GetLiveData(P)
-    pT0=P.windowstart;
+    P.T0=P.windowstart;
     data=P.eeg;
     datanum=size(data, 2);
     [chunk,~] = P.LSLinlet.pull_chunk();
@@ -617,7 +411,7 @@ function P=GetLiveData(P)
     
     if (nreadframe>0)
         data(:, 1:datanum-nreadframe) = data(:, nreadframe+1:datanum);
-        data(:, datanum-nreadframe+1:datanum)=chunk(find(P.maf.mef_valid),:);
+        data(:, datanum-nreadframe+1:datanum)=chunk(find(P.maf.mef_valid),:); %#ok<FNDSB>
     end
     T0=now;
     usec=rem(rem(T0,1)*86400,1)*1000*1000;
@@ -648,20 +442,234 @@ function EventListBox_CreateFcn(hObject, ~, ~)
     end
 end
 
+%% --- Open File
+function P=OpenOfflineFile(P, PathName, FileName)
+    % MEF Header and initialization
+    if exist( fullfile(PathName, FileName), 'file')==2,
+        P.maf.OpenMAF( PathName ,  FileName);
+        if ~isempty(P.maf.filename),
+            P.maf=P.maf.ReadALLMAF;
+            P.dtoggle=1;
+        end
+    end
+end
 
-%% Close the app ---------------------------------------------------------
-function CloseMenuItem_Callback(hObject, eventdata, handles)
+%% --- Open Live Stream
+function P=OpenLiveStream(P, RM)
+
+    %Livestream initialization
+    p0=pwd;
+    P.LSLlib = lsl_loadlib();
+    result = {};
+    while isempty(result)
+        result = lsl_resolve_byprop(P.LSLlib,'source_id', ['nkroom' num2str(RM)]); end 
+    P.LSLinlet = lsl_inlet(result{1});
+    % Get Stream Infos & Channels
+    P.LSLinfo=P.LSLinlet.info;
+    ch = P.LSLinfo.desc().child('channels').child('channel');
+    channels = {};
+    indexdropch=[];
+    indexch=0;
+    while ~ch.empty()
+        name = ch.child_value_n('label');
+        indexch=indexch+1;
+        if name,
+            channels{end+1} = name; %#ok<AGROW>
+        else
+            indexdropch=[indexdropch indexch]; %#ok<AGROW>
+        end
+        ch = ch.next_sibling_n('channel');
+    end
+    P.maf.stream_label_list=channels;
+    P.labels=P.maf.stream_label_list;
+
+    if length(channels) ~= P.LSLinfo.channel_count(),
+        P.maf.mef_valid=ones(1,P.LSLinfo.channel_count());
+        P.maf.mef_valid(indexdropch)=0;
+        disp([int2str(length(indexdropch)) ' empty channels dropped']); % if empty channel are dropped, need to save the index of channels to drop from the stream chunk
+    end
+
+    P.drive='R';
+    P.PY_ID='PY99N999';
+    P.maf.nb_stream=length(P.maf.stream_label_list);
+    P.maf.nb_sources=length(P.maf.stream_label_list);
+    P.maf.start_times(1)=date2usec(datestr(now));
+    P.maf.end_times(1)=date2usec(datestr(now))+3600*1e6;
+    P.dtoggle=0;
+    cd(p0);
+
+end
+
+%% --- Init Display after file/stream opened
+function InitDisplay(hObject)
+
+    global streamtype;
+    
+    P=guidata(hObject);
+
+    % Patient Label
+    str=sprintf('Patient Code: %s', P.PY_ID);
+    set(P.patienttext, 'String', str, 'HorizontalAlign', 'center');
+
+    if P.windowstart==0;
+        P.windowstart=P.maf.start_times(1);
+    end
+    P.T0=P.maf.start_times(1);
+    P.Tend=P.maf.end_times(end);
+    
+    % Reading Events
+    [ P.events_name, P.events_time, P.exclusion ] = CompileEvent( P.maf.filepath, P.PY_ID );
+    convertedtimes=usec2date(P.events_time);
+    listboxinfo={};
+    for ni=1:length(convertedtimes),
+        listboxinfo{ni}=[P.events_name{ni} '@' convertedtimes{ni}]; %#ok<AGROW>
+    end
+    set(P.EventListBox, 'String', listboxinfo);
+     
+    % Read Grid Infos
+    [ P.GL, P.GS ] = read_patient_gridinfo( P.maf.filepath, P.PY_ID );
+    inclusion={};
+    P.maf.UpdateChannelSelection(inclusion, P.exclusion);
+
+    % create UI electrodes grid panel entries
+    [S, G, ~]=channel_group(P.maf.stream_label_list);
+    Gcode=unique(G);
+    % Loop on grid
+    for ngrid=1:length(Gcode), 
+        idx=find(G==Gcode(ngrid));  % index of channels in this grid
+        rootidx= isstrprop(S{idx(1)}, 'alpha');
+        P.grid_label{ngrid}=S{idx(1)}(rootidx); 
+        P.grid_inclusion(ngrid)=1;
+        even=1-mod(ngrid,2);
+        row=floor((ngrid-1)/2)+1;
+        P.cbh(ngrid) = uicontrol('Parent',P.uipanelelectrodes,'Style','checkbox',...
+                    'String',P.grid_label{ngrid},...
+                    'Value',1,...
+                    'Units','normalized',...
+                    'FontSize', 7,...
+                    'Position',[0.05+even*0.5, 1-row*0.075, 0.4, 0.05],...
+                    'userdata', ngrid,...
+                    'Callback',@UpdateChannelSelect);
+    end
+    
+    % Set Time Axe tick and limits
+    set(P.timeaxe, 'XTick', [], 'YTick', [], 'Box', 'off', 'visible','off');
+    set(P.timeaxe, 'XLim', [P.T0 P.Tend]);
+    set(P.timeaxe, 'Visible','on');
+    % Draw periods
+    for nepisode=1:length(P.maf.start_times),
+        set(P.timeaxe, 'NextPlot','Add');
+        t0=P.maf.start_times(nepisode);
+        t1=P.maf.end_times(nepisode);
+        hp=patch([t0 t1 t1 t0], [0 0 1 1], 'g', 'FaceColor', [0.3 0.7 0.3],  'EdgeColor','none', 'Parent', P.timeaxe);
+        set(hp, 'ButtonDownFcn', @PointNClickTimeBar);
+    end
+    % Add Dates / Time Scale
+    D0=(floor(P.T0/1e6/3600/24)*24*3600*1e6);
+    D1=(ceil(P.Tend/1e6/3600/24)*24*3600*1e6);
+    iList=[1 2 3 6 12 24 48 72 96];
+    interval=1;
+    xticktime=D0:iList(interval)*3600*1e6:D1;
+    while length(xticktime)>10 && interval<9,
+        interval=interval+1;
+        xticktime=D0:iList(interval)*3600*1e6:D1;
+    end
+    if interval<6,
+        formattime=0;
+    else
+        formattime=1;
+    end
+    set(P.timeaxe, 'XLim', [D0 D1]);
+    for nt=1:length(xticktime)-1,
+        text(xticktime(nt), -0.2, usec2date(xticktime(nt), formattime), 'FontSize', 7, 'HorizontalAlign','center', 'VerticalAlign','top', 'FontName','Arial Rounded MT', 'Parent', P.timeaxe);
+        plot([1 1]*xticktime(nt), [0 1], 'k:', 'LineW',1, 'Parent', P.timeaxe);
+    end
+    % Time marker
+    P.timemarker=patch([P.windowstart*[1 1] (P.windowstart+P.windowsize*1e6)*[1 1]], [0 1 1 0], 'r', 'EdgeColor', 'r', 'LineW', 4, 'Parent', P.timeaxe);
+    
+    % First Read
+    if streamtype==1,
+        [P.maf, P.eeg, P.labels, P.xeeg]=GetEEGData(P, P.windowstart, P.windowsize*1e6);
+        P.Fs=P.maf.mef_streams(find(P.maf.mef_included==1, 1, 'first')).fs;
+    else
+        P.Fs=double(P.LSLinfo.nominal_srate());
+        P.ftoggle=1; % no filter
+        datanum = P.Fs*P.windowsize;
+        P.eeg = zeros(P.maf.nb_stream, datanum);
+        P=GetLiveData(P);
+    end
+    
+    P.FsD=P.Fs; % default to 1/10th only set if downsampling
+    
+    toggleUI(P, 1);
+    
+    % generic Update Plots
+    OOupdatemefplot(P);
+end
+
+%% --- Toggle UI elements
+function toggleUI(P, bool)
+    
+if bool,
+    % Enable UI
+    set(P.pushbutton8, 'Enable','on');
+    set(P.pushbutton9, 'Enable','on');
+    set(P.pushbutton10, 'Enable','on');
+    set(P.pushbutton11, 'Enable','on');
+    set(P.pushbutton12, 'Enable','on');
+    set(P.pushbutton13, 'Enable','on');
+
+    set(P.bi, 'Enable','on');
+    set(P.mono, 'Enable','on');
+    set(P.ws, 'Enable','on');
+
+    set(P.EventListBox, 'Enable','on');
+    
+    set(P.OpenMenuItem, 'Enable','off');
+    set(P.CloseMenuItem, 'Enable','on');
+else
+    % Enable UI
+    set(P.pushbutton8, 'Enable','off');
+    set(P.pushbutton9, 'Enable','off');
+    set(P.pushbutton10, 'Enable','off');
+    set(P.pushbutton11, 'Enable','off');
+    set(P.pushbutton12, 'Enable','off');
+    set(P.pushbutton13, 'Enable','off');
+
+    set(P.bi, 'Enable','off');
+    set(P.mono, 'Enable','off');
+    set(P.ws, 'Enable','off');
+
+    set(P.EventListBox, 'Enable','off');
+    
+    set(P.OpenMenuItem, 'Enable','on');
+    set(P.CloseMenuItem, 'Enable','off');
+end
+end
+
+%% Pick and open a file --------------------------------------------------
+function OpenMenuItem_Callback(hObject, ~, handles)
+    global streamtype;
     P=handles;
-    close(P.eventfigure);
+    [FileName,PathName,~] = uigetfile('*.maf','Choose MAF file');
+    if ~isequal(FileName,0),
+        streamtype=1;
+        [~, P.PY_ID, ~]=fileparts(FileName);
+        P=OpenOfflineFile(P, PathName, FileName);
+        guidata(hObject, P);
+        InitDisplay(hObject);
+    end
+
+end
+
+%% Close the file / disable UI ---------------------------------------------------------
+function CloseMenuItem_Callback(~, ~, handles)
+    P=handles;
+    toggleUI(P, 0);
+end
+
+%% Close the app --------------------------------------------------------------------
+function Quit_Callback(~, ~, handles)
+    P=handles;
     close(P.mainoomeffigure);
 end
-
-
-% --------------------------------------------------------------------
-function OpenMenuItem_Callback(hObject, eventdata, handles)
-P=handles;
-[FileName,PathName,FilterIndex] = uigetfile('*.maf','Choose MAF file');
-
-
-end
-
