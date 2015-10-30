@@ -90,5 +90,6 @@ for nepisode=1:maf.nb_episodes,                                                 
     
 end
 maf.nb_stream=IDcounter;
+maf.mef_valid=1;
 
 

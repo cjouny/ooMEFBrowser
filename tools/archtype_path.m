@@ -9,6 +9,11 @@ if ~ischar(drive),
     disp('Invalid Drive Letter');
     return;
 end
+if length(drive)>1,
+    disp('Too many character. Only input the drive letter (eg. "R")');
+    return;
+end
+    
 
 switch type,
     case {'MEF', 'HDR'}

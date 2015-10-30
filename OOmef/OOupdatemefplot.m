@@ -61,7 +61,10 @@ else
     
     % 60Hz filter in place
     if P.filter60,
-        d = designfilt('bandstopiir','FilterOrder',20, ...
+        
+        %f = fdesign.notch('N,F0,Q', 2, 60, 10, P.FsD);
+        %d = design(f,'SystemObject',true);
+        d = designfilt('bandstopiir','FilterOrder',10, ...
                    'HalfPowerFrequency1',59,'HalfPowerFrequency2',61, ...
                    'DesignMethod','butter','SampleRate',P.FsD);
         feeg = filtfilt(d,feeg')';
