@@ -83,7 +83,7 @@ classdef EEG_axes < handle
             EEGAxe.xtickenable=enablextick;
             EEGAxe.decimate=dtoggle;
             for ns=EEGAxe.nplot:-1:1,
-                EEGAxe.eegplots(ns).Draw(EEGAxe.decimate);
+                EEGAxe.eegplots(ns).Draw(EEGAxe.decimate); % Redraw individual plots
                 xmini(ns)=min(EEGAxe.eegplots(ns).xdata);
                 xmaxi(ns)=max(EEGAxe.eegplots(ns).xdata);
             end

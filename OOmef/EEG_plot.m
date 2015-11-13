@@ -11,8 +11,10 @@ properties (SetAccess=public)
     axe_handle
     position                        % Y position
     eegid
-    xdata
+    xdata                           % Original Data
     ydata
+    dxdata                          % Decimated data
+    dydata
     fs
     linecolor=[0 0 0];
     linewidth=1;
@@ -21,7 +23,8 @@ properties (SetAccess=public)
     scalefactor=1;                  % factor to apply to axe scale
     ylabel
     fontsize=7;
-    analysis=0;                       % display of analysis results overlap
+    analysis=1;                       % display of analysis results overlap
+    value_analysis;                     % store value to plot
     hbox;
 end
 
@@ -38,27 +41,32 @@ end
                 'Parent', handle_axe);
             EEGPlot.hbox=patch('XData', [0 100 100 0], ...
                 'YData', [position-0.25 position-0.25 position+0.25 position+0.25], ...
-                'EdgeColor','none', 'FaceColor',[0.6 0.8 0.6], 'FaceAlpha', 0.5,...
+                'EdgeColor','none', 'FaceColor',[0.8 0.4 0.1], 'FaceAlpha', 0.5,...
                 'Parent', handle_axe);
         end
 
-        % Set X and Y data (plotting)
-        function Draw(EEGPlot, decimation)
+        function Decimate(EEGPlot, decimation)
             axeposition=getpixelposition(EEGPlot.axe_handle);
             % Check axis width for pixels size and resample as needed
             width=axeposition(3);
             ratio=floor(length(EEGPlot.ydata)/width);
             if ratio>=2 && decimation,
-                tmp_ydata=decimate(EEGPlot.ydata, ratio);
-                tmp_xdata=downsample(EEGPlot.xdata, ratio);
+                EEGPlot.dydata=decimate(EEGPlot.ydata, ratio);
+                EEGPlot.dxdata=downsample(EEGPlot.xdata, ratio);
             else
-                tmp_xdata=EEGPlot.xdata;
-                tmp_ydata=EEGPlot.ydata;
+                EEGPlot.dydata=EEGPlot.ydata;
+                EEGPlot.dxdata=EEGPlot.xdata;
             end
+        end
+        
+        % Set X and Y data (plotting)
+        function Draw(EEGPlot, decimation)
+
+            Decimate(EEGPlot, decimation);
             
             set(EEGPlot.plot_handle,...
-                        'XData', tmp_xdata,...
-                        'YData', EEGPlot.position+EEGPlot.scale*EEGPlot.scalefactor*tmp_ydata,...
+                        'XData', EEGPlot.dxdata,...
+                        'YData', EEGPlot.position+EEGPlot.scale*EEGPlot.scalefactor*EEGPlot.dydata,...
                         'Color', EEGPlot.linecolor,...
                         'LineWidth', EEGPlot.linewidth);
 

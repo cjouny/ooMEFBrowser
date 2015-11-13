@@ -19,41 +19,22 @@ switch type,
     case {'MEF', 'HDR'}
 
         switch computer
-             case 'MACI64'                          %% MAC
+            
+             case 'MACI64'                          % MAC
                  switch drive
-                     case 'L'
-                         data_path='/Users/cjouny/EEG';
-                     case 'P'
-                        data_path='/Volumes/P_Share/EEG';
-                     case 'R'
-                        data_path='/Volumes/R_Share/EEG';
                      case 'T'
                         data_path='/Volumes/ERL/EEG';
                      otherwise
-                         %disp(['Unknown drive: ' drive]);
                          data_path=['/Volumes/' drive '_Share/EEG'];
                  end
-            case {'PCWIN';'PCWIN32';'PCWIN64'}              %% WINDOWS
-                 switch drive
-                     case 'E'
-                        data_path='E:\EEG';
-                     case 'P'
-                        data_path='P:\EEG';
-                     case 'R'
-                        data_path='R:\EEG';
-                     case 'T'
-                         data_path='T:\EEG';
-                     otherwise
-                         %disp(['Unknown drive: ' drive]);
-                         data_path=[drive ':\EEG'];
-                 end
+                 
+            case {'PCWIN';'PCWIN32';'PCWIN64'}       % WINDOWS
+                 data_path=[drive ':\EEG'];
 
-             case {'GLNX86';'GLNXA64'}              %% LINUX
+             case {'GLNX86';'GLNXA64'}              % LINUX
                  switch drive
                      case 'R'
                         data_path='/comp/rdrive/EEG';
-                     case 'T'
-                        data_path='/comp/tdrive/EEG';
                      otherwise
                          disp(['Unknown drive: ' drive]);
                  end
