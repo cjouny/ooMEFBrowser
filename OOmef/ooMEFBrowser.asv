@@ -122,7 +122,7 @@ function ooMEFBrowser_OpeningFcn(hObject, ~, handles, varargin)
     P.windowsize=10;
 
     P.exclusion={};
-    P.inclusion={};  % overwriting inclusion can be added here
+    P.inclusion={'RPG'};
     P.mode='monopolar';
     P.play=0;
 
@@ -529,7 +529,7 @@ function InitDisplay(hObject)
     % Read Grid Infos
     [ P.GL, P.GS ] = read_patient_gridinfo( P.maf.filepath, P.PY_ID );
     %inclusion={};
-    P.maf.UpdateChannelSelection(P.inclusion, P.exclusion);
+    P.maf.UpdateChannelSelection(inclusion, P.exclusion);
 
     % create UI electrodes grid panel entries
     [S, G, ~]=channel_group(P.maf.stream_label_list);

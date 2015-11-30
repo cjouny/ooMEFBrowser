@@ -6,19 +6,20 @@ function [ events_name, events_time, exclusion ] = CompileEvent( data_path, PY_I
     
     % Reading custom grid and seizure information if available
     try 
-        [sztimes_cj_name, exclusion]=SZDB_CJ(PY_ID);
+        [sztimes_cj_name, exclusion_v0]=SZDB_CJ(PY_ID);
         sztimes_cj=date2usec(sztimes_cj_name);
     catch
         sztimes_cj=[];
         sztimes_cj_name={};
-        exclusion={};
+        exclusion_v0={};
     end
     try 
-        [sztimes_de_name]=SZDB_DE(PY_ID);
+        [sztimes_de_name, exclusion_v1]=SZDB_DE(PY_ID);
         sztimes_de=date2usec(sztimes_de_name);
     catch
         sztimes_de=[];
         sztimes_de_name={};
+        exclusion_v1={};
     end
         
     %eventlisttime=[date2usec(sztimes_cj); date2usec(sztimes_de); [P.maf.event_list{:,1}]'];
@@ -30,6 +31,8 @@ function [ events_name, events_time, exclusion ] = CompileEvent( data_path, PY_I
     
     events_name=events_name(indextime);
     events_time=events_time(indextime);
+    
+    exclusion=[exclusion_v0; exclusion_v1];
     
 end
 

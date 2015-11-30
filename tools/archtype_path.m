@@ -16,10 +16,8 @@ end
     
 
 switch type,
-    case {'MEF', 'HDR'}
-
+    case {'MEF', 'HDR'}     % MEF and HDR formated files
         switch computer
-            
              case 'MACI64'                          % MAC
                  switch drive
                      case 'T'
@@ -27,10 +25,8 @@ switch type,
                      otherwise
                          data_path=['/Volumes/' drive '_Share/EEG'];
                  end
-                 
-            case {'PCWIN';'PCWIN32';'PCWIN64'}       % WINDOWS
+            case {'PCWIN';'PCWIN32';'PCWIN64'}      % WINDOWS
                  data_path=[drive ':\EEG'];
-
              case {'GLNX86';'GLNXA64'}              % LINUX
                  switch drive
                      case 'R'
@@ -41,17 +37,17 @@ switch type,
         end
 
 
-    case 'BR'
+    case 'BR'       % Blackrock
+        % Not use
         
-        
-    case 'NK',
+    case 'NK',      % NK original files (mostly for NKmonitor)
         switch computer
-            case {'PCWIN';'PCWIN32';'PCWIN64'}              %% WINDOWS
+            case {'PCWIN';'PCWIN32';'PCWIN64'}              % WINDOWS
                 switch drive
                     case 'Z'
                         data_path='Z:\';
                 end
-            case 'MACI64'
+            case 'MACI64'                                   % MAC
                 switch drive
                     case 'Z'
                         data_path='/Volumes/NKData';
