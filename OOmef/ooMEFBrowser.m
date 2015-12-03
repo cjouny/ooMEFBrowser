@@ -628,7 +628,7 @@ end
 function toggleUI(P, bool)
     
 if bool,
-    % Enable UI
+    % Enable UI components, disable File Open
     set(P.pushbutton8, 'Enable','on');
     set(P.pushbutton9, 'Enable','on');
     set(P.pushbutton10, 'Enable','on');
@@ -645,7 +645,7 @@ if bool,
     set(P.OpenMenuItem, 'Enable','off');
     set(P.CloseMenuItem, 'Enable','on');
 else
-    % Enable UI
+    % Disable UI components, enable File Open
     set(P.pushbutton8, 'Enable','off');
     set(P.pushbutton9, 'Enable','off');
     set(P.pushbutton10, 'Enable','off');
@@ -676,16 +676,15 @@ function OpenMenuItem_Callback(hObject, ~, handles)
         guidata(hObject, P);
         InitDisplay(hObject);
     end
-
 end
 
-%% Close the file / disable UI ---------------------------------------------------------
+%% Close the file / disable UI --------------------------------------------
 function CloseMenuItem_Callback(~, ~, handles)
     P=handles;
     toggleUI(P, 0);
 end
 
-%% Close the app --------------------------------------------------------------------
+%% Close the app ----------------------------------------------------------
 function Quit_Callback(~, ~, handles)
     P=handles;
     close(P.mainoomeffigure);
