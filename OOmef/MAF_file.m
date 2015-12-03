@@ -41,7 +41,9 @@ classdef MAF_file < handle
                 MAFFile.current_episode=-1;
                 MAFFile.mef_streams=MEF_stream.empty(MAFFile.MAX_STREAM,0);                    
             else
-                fprintf(2, 'MAF file cannot be found in the specified path.\n');
+                %fprintf(2, 'MAF file cannot be found in the specified path.\n');
+                ME = MException('MAF:OpenMAF','MAF file cannot be found in the specified path');
+                throw(ME);
             end
         end
 
@@ -124,8 +126,9 @@ classdef MAF_file < handle
             end
             % Validate times
             if utime0>MAFFile.end_times(end) || utime0+uduration<MAFFile.start_times(1),
-                fprintf(2, 'Requested period is not contained in current folder.\n\tIf this is an ongoing recordings, check that the MAF file was updated.\n');
-                return;
+                ME = MException('MAF:GetEEGData','Requested time is not contained in current folder.');
+                %fprintf(2, 'Requested period is not contained in current folder.\n\tIf this is an ongoing recordings, check that the MAF file was updated.\n');
+                throw(ME);
             end
             
             mefstreams=MAFFile.mef_streams;

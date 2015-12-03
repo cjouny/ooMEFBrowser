@@ -141,8 +141,12 @@ function ooMEFBrowser_OpeningFcn(hObject, ~, handles, varargin)
             PathName=fullfile(data_path, PY_ID);
             FileName=[PY_ID '.maf'];
             P=OpenOfflineFile(P, PathName, FileName);
-            guidata(hObject, P);
-            InitDisplay(hObject);
+            if ~isempty(P.maf.filename),
+                guidata(hObject, P);
+                InitDisplay(hObject);
+            else
+                Quit_Callback([], [], P);
+            end
         case 2
             % Livestream initialization
             P=OpenLiveStream(P, RM);
@@ -399,7 +403,14 @@ end
 %% Reading function to get EEG data
 function [maf, eeg, labels, xeeg]=GetEEGData(P, windowstart, windowsize)
     maf=P.maf;
-    [maf, eeg, labels, xeeg]=maf.GetEEGData(windowstart, windowsize);
+    eeg=[];
+    xeeg=[];
+    labels={};
+    try
+        [maf, eeg, labels, xeeg]=maf.GetEEGData(windowstart, windowsize);
+    catch Merror
+        errordlg(Merror.message , 'Error reading EEG');
+    end
 end
 
 function P=GetLiveData(P)
@@ -431,8 +442,9 @@ function EventListBox_Callback(hObject, ~, handles)
     event_time__selected = P.events_time(index_selected); 
     P.windowstart=event_time__selected-P.windowsize*1e6/2;
     [P.maf, P.eeg, P.labels, P.xeeg]=GetEEGData(P, P.windowstart, P.windowsize*1e6);
-
-    OOupdatemefplot(P);
+    if ~isempty(P.eeg), 
+        OOupdatemefplot(P);
+    end
 end
 
 %% --- Executes during object creation, after setting all properties.
@@ -451,6 +463,9 @@ function P=OpenOfflineFile(P, PathName, FileName)
             P.maf=P.maf.ReadALLMAF;
             P.dtoggle=1;
         end
+    end
+    if isempty(P.maf.filename),
+        warndlg('The path and PYID does not match to a valid MAF file', 'Error opening MAF file');
     end
 end
 
@@ -487,6 +502,8 @@ function P=OpenLiveStream(P, RM)
         P.maf.mef_valid=ones(1,P.LSLinfo.channel_count());
         P.maf.mef_valid(indexdropch)=0;
         disp([int2str(length(indexdropch)) ' empty channels dropped']); % if empty channel are dropped, need to save the index of channels to drop from the stream chunk
+    else
+        P.maf.mef_valid=ones(1,P.LSLinfo.channel_count());
     end
 
     P.drive='R';
