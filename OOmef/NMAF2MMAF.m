@@ -10,7 +10,7 @@ function maf = NMAF2MMAF(maf, filepath, filename)
 p=mfilename('fullpath');
 k=strfind(p,filesep);
 localpath=p(1:k(end));
-NET.addAssembly(fullfile(localpath, 'MEF.dll')); % From G:\Dropbox\work\sources\Visual Studio 2013\Projects\MEF_CSHARP\MEF\bin\Release\MEF.dll
+NET.addAssembly(fullfile(localpath, 'MEF.dll')); % From \\Dropbox\work\sources\Visual Studio 2013\Projects\MEF_CSHARP\MEF\bin\Release\MEF.dll
 
 mafNETfile=MEF.MAFFile(fullfile(filepath, filename));   % .NET class version
 mafNETfile.readMAF();                                   % Read MAF file
