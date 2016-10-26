@@ -681,6 +681,7 @@ end
 %% Close the file / disable UI --------------------------------------------
 function CloseMenuItem_Callback(~, ~, handles)
     P=handles;
+    % TODO: close files and clean UI
     toggleUI(P, 0);
 end
 
@@ -689,3 +690,17 @@ function Quit_Callback(~, ~, handles)
     P=handles;
     close(P.mainoomeffigure);
 end
+
+
+% --------------------------------------------------------------------
+function Info_Callback(hObject, eventdata, handles)
+% hObject    handle to Info (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+    P=handles;
+    InfoWindow(P.maf);
+
+end
+
+
+

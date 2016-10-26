@@ -23,7 +23,7 @@ properties (SetAccess=public)
     scalefactor=1;                  % factor to apply to axe scale
     ylabel
     fontsize=7;
-    analysis=1;                       % display of analysis results overlap
+    analysis=0;                       % display of analysis results overlap
     value_analysis;                   % store value to plot
     hanalysistext;
     hbox;
@@ -52,7 +52,7 @@ end
             % Check axis width for pixels size and resample as needed
             width=axeposition(3);
             ratio=floor(length(EEGPlot.ydata)/width);
-            if ratio>=2 && decimation,
+            if ratio>=2 && decimation
                 EEGPlot.dydata=decimate(EEGPlot.ydata, ratio);
                 EEGPlot.dxdata=downsample(EEGPlot.xdata, ratio);
             else
@@ -73,7 +73,7 @@ end
                         'LineWidth', EEGPlot.linewidth);
 
             %refreshdata(EEGPlot.plot_handle);
-            if EEGPlot.analysis,
+            if EEGPlot.analysis
                 %dd=log10(sum(EEGPlot.ydata.^2))/100;
                 %dd=exp(abs(skewness(EEGPlot.ydata)))/20;
                 dd=sum(abs(diff(EEGPlot.ydata)))/length(EEGPlot.ydata)/100;
